@@ -8,24 +8,29 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    abortOnError: process.env.NODE_ENV !== 'development',
-  });
-  await configureApp(app, { 
-    disableSwagger: true,
-  });
-  const logger = new Logger('Bootstrap');
-  const host = process.env.HOST || process.env.SERVER_HOST || '0.0.0.0';
-  const port = Number(process.env.PORT || process.env.SERVER_PORT || 3000);
+  try {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      abortOnError: process.env.NODE_ENV !== 'development',
+    });
+    await configureApp(app, { 
+      disableSwagger: true,
+    });
+    const logger = new Logger('Bootstrap');
+    const host = process.env.HOST || process.env.SERVER_HOST || '0.0.0.0';
+    const port = Number(process.env.PORT || process.env.SERVER_PORT || 3000);
 
-  // 注册视图引擎, 渲染 client 目录下的 html 文件
-  app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
-  app.setViewEngine('html');
-  app.engine('html', hbsExpressEngine);
+    // 注册视图引擎, 渲染 client 目录下的 html 文件
+    app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
+    app.setViewEngine('html');
+    app.engine('html', hbsExpressEngine);
 
-  await app.listen(port, host);
-  logger.log(`Server running on ${host}:${port}`);
-  logger.log(`API endpoints ready at http://${host}:${port}/api`);
+    await app.listen(port, host);
+    logger.log(`Server running on ${host}:${port}`);
+    logger.log(`API endpoints ready at http://${host}:${port}/api`);
+  } catch (error) {
+    console.error('❌ 启动过程中捕获到致命错误:', error);
+    process.exit(1);
+  }
 }
 
 bootstrap();
