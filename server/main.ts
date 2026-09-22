@@ -8,6 +8,11 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // 在 main.ts 的 bootstrap 函数开头加入：
+  const rawDbUrl = process.env.DATABASE_URL || '';
+  // 隐藏密码打印，防止敏感信息泄露，但能看清结构
+  const maskedUrl = rawDbUrl.replace(/:([^:@]+)@/, ':****@');
+ console.log('👉 [Debug] 当前环境变量 DATABASE_URL 结构:', maskedUrl);
   const logger = new Logger('Bootstrap');
   try {
     console.log('👉 [Step 1] 开始创建 Nest 应用...');
