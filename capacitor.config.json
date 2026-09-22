@@ -1,0 +1,31 @@
+{
+  "appId": "com.weiji.healthapp",
+  "appName": "微迹",
+  "webDir": "dist/client",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "",
+      "keystoreAlias": "",
+      "keystoreAliasPassword": "",
+      "keystorePassword": "",
+      "releaseType": "APK"
+    }
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchFadeOutDuration": 300,
+      "backgroundColor": "#f0f7e8",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#f0f7e8",
+      "overlaysWebView": true
+    }
+  }
+}
