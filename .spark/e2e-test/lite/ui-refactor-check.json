@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "打开首页，确认整体视觉风格：暖米背景、松墨绿标题、毛玻璃卡片、莫兰迪色快捷记录图标"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "首页今日概览卡片：四列大字数据、苔绿进度条、连续天数徽章"
+    },
+    {
+      "id": 3,
+      "priority": "p1",
+      "description": "首页我的成就 + 最近记录区块：paper-card 样式正常"
+    },
+    {
+      "id": 4,
+      "priority": "p0",
+      "description": "打开记录中心页，确认八大模块卡片使用莫兰迪色 + paper-card"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "打开我的页面，确认顶部苔绿晕染、用户卡片、成就、功能入口样式"
+    },
+    {
+      "id": 6,
+      "priority": "p1",
+      "description": "底部导航栏：选中态松墨绿、未选中灰绿、毛玻璃背景"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开首页，检查是否有蓝色或灰色遮罩层覆盖整个界面，页面是否正常显示内容或登录表单"},{"id":2,"priority":"p0","description":"导航到统计页/stats，检查页面是否正常渲染，有无异常全屏遮罩"},{"id":3,"priority":"p1","description":"检查是否有Dialog/Modal/Loading层未关闭，z-index高的固定定位元素是否正常"}]}

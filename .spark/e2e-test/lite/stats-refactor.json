@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开首页，验证「我的成就」只显示已达成项或引导文案，无未达成灰项"},{"id":2,"priority":"p0","description":"打开统计页，验证四个时间维度tab存在（本周/本月/近半年/本年）"},{"id":3,"priority":"p0","description":"统计页本周视图，验证周历7列布局与三餐格结构"},{"id":4,"priority":"p1","description":"统计页切换到本月视图，验证月历网格布局"},{"id":5,"priority":"p1","description":"统计页切换到近半年与本年视图，验证无白屏且内容正常"}]}

@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"注册新账号并登录，首页正常显示数据概览无报错"},{"id":2,"priority":"p0","description":"登录后首页概览接口(overview/today和overview/recent)正常返回200，无401错误"},{"id":3,"priority":"p0","description":"刷新页面后保持登录状态，首页数据正常加载，不退回登录页"},{"id":4,"priority":"p1","description":"首页无蓝色/灰色全屏遮罩层，核心内容可见"},{"id":5,"priority":"p1","description":"退出登录后正确跳转到登录页，token被清除"}]}

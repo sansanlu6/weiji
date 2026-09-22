@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "注册新账号成功后跳转首页，首页数据正常加载无401报错"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "刷新页面后保持登录状态，不退回登录页，首页数据正常显示"
+    },
+    {
+      "id": 3,
+      "priority": "p1",
+      "description": "进入统计看板页，四个维度tab切换均正常加载无401报错"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "退出登录后跳转到登录页"
+    }
+  ]
+}

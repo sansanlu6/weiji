@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"注册新账号后登录成功，进入首页"},{"id":2,"priority":"p0","description":"登录后进入统计页，检查页面是否正常加载，无 401 报错"},{"id":3,"priority":"p1","description":"切换统计-本月 tab，检查 diet/meals 等接口是否正常返回"}]}

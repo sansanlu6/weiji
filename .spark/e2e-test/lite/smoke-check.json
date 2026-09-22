@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "打开登录页，页面正常渲染（非白屏、非 Page not found）"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "打开注册页，页面正常渲染"
+    }
+  ]
+}

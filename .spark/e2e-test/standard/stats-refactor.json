@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"首页「我的成就」只显示已达成项或引导文案，无未达成灰项"},{"id":2,"priority":"p0","description":"统计页四个时间维度tab可切换且内容正常（本周→本月→近半年→本年依次点击验证）"},{"id":3,"priority":"p0","description":"本周视图：周历7列+每列早中晚三餐格，布局正确"},{"id":4,"priority":"p1","description":"本月视图：月历网格布局正常，日期格子存在"},{"id":5,"priority":"p1","description":"近半年与本年视图无白屏，图表与数字卡渲染正常"}]}

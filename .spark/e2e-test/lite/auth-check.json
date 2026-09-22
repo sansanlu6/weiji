@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开应用登录页，页面应正常渲染不白屏，显示登录表单"},{"id":2,"priority":"p0","description":"打开注册页，页面应正常渲染"}]}

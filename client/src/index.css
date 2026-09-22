@@ -1,0 +1,106 @@
+@import '@lark-apaas/client-toolkit/lib/index.css';
+@import "tw-animate-css";
+@import "./tailwind-theme.css";
+@import "./typography.css";
+
+@source "../../node_modules/streamdown/dist/*.js";
+@config "../../tailwind.config.ts";
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  background-color: #faf8f5;
+  color: #4a6356;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+@media screen and (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chart-card {
+  box-sizing: border-box;
+  padding: 12px;
+}
+
+.chart-container {
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.record-input {
+  background-color: transparent !important;
+  border: 1px solid #dcebe1 !important;
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+  color: #274737 !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 14px;
+}
+
+.record-input:focus {
+  border-color: #176958 !important;
+  background-color: transparent !important;
+  box-shadow: 0 0 0 3px rgba(23, 105, 88, 0.1) !important;
+  outline: none !important;
+}
+
+.record-input::placeholder {
+  color: #8c9e94 !important;
+}
+
+.record-input[type="number"]::-webkit-inner-spin-button,
+.record-input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 24px;
+}
+
+.record-textarea {
+  background-color: transparent !important;
+  border: 1px solid #dcebe1 !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  color: #274737 !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 96px;
+  resize: none;
+}
+
+.record-textarea:focus {
+  border-color: #176958 !important;
+  background-color: transparent !important;
+  box-shadow: 0 0 0 3px rgba(23, 105, 88, 0.1) !important;
+  outline: none !important;
+}
+
+.record-textarea::placeholder {
+  color: #8c9e94 !important;
+}

@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开 /login 登录页，显示用户名密码输入框和登录按钮"},{"id":2,"priority":"p0","description":"打开 /register 注册页，显示用户名、密码、确认密码输入框和注册按钮"},{"id":3,"priority":"p1","description":"未登录访问首页 / 自动跳转到登录页"},{"id":4,"priority":"p1","description":"登录页和注册页整体风格为青柠绿清新风，大圆角卡片"}]}

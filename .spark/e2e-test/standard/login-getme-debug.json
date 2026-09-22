@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "注册新账号后退出，再用同一账号登录，验证登录后 getMe 不返回 401，能成功跳首页"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "登录成功后刷新页面，验证仍保持登录状态（token 持久化 + initAuth getMe 正常）"
+    }
+  ]
+}

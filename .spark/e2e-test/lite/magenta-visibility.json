@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开登录页，验证右上角紫红色200×200测试方块是否可见（data-testid=magenta-visibility-block）"},{"id":2,"priority":"p0","description":"打开首页（需要登录），验证紫红色测试块在右上角可见"},{"id":3,"priority":"p1","description":"打开统计页，验证紫红色测试块在右上角可见"}]}

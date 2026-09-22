@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"访问登录页，页面正常渲染，显示Logo、标题、用户名和密码输入框、登录按钮"},{"id":2,"priority":"p0","description":"使用已有账号登录成功，跳转到首页，首页正常显示内容"},{"id":3,"priority":"p0","description":"注册新账号成功，自动登录并跳转到首页"},{"id":4,"priority":"p1","description":"登录失败时（密码错误）显示错误提示信息"},{"id":5,"priority":"p1","description":"未勾选协议时点击登录按钮，显示错误提示"}]}

@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"登录后测量统计页周期切换栏getBoundingClientRect值"},{"id":2,"priority":"p0","description":"登录后测量记录中心页第一行卡片getBoundingClientRect值"},{"id":3,"priority":"p1","description":"登录后测量情绪记录页列表首行卡片getBoundingClientRect值"}]}

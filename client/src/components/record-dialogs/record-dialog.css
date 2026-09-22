@@ -1,0 +1,66 @@
+.record-dialog label {
+  color: #52665a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.record-dialog input[type="text"],
+.record-dialog input[type="number"],
+.record-dialog textarea {
+  background: #f2f7f4 !important;
+  border: 1px solid transparent !important;
+  border-radius: 14px !important;
+  color: #2a483a !important;
+}
+
+.record-dialog input:focus,
+.record-dialog textarea:focus,
+.record-dialog input:focus-within,
+.record-dialog textarea:focus-within {
+  border-color: #2a483a !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.record-dialog input::placeholder,
+.record-dialog textarea::placeholder {
+  color: #94a39a !important;
+}
+
+/* DateTimeField trigger button */
+.record-dialog .dtf-trigger {
+  background: #f2f7f4 !important;
+  border: 1px solid transparent !important;
+  border-radius: 14px !important;
+  color: #2a483a !important;
+}
+
+.record-dialog .dtf-trigger:focus,
+.record-dialog .dtf-trigger:focus-within,
+.record-dialog .dtf-trigger[data-state="open"] {
+  border-color: #2a483a !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Dialog footer buttons */
+.record-dialog .dialog-footer-btn-primary {
+  background: #2a483a !important;
+  color: #ffffff !important;
+  height: 46px !important;
+  border-radius: 23px !important;
+  border: none !important;
+}
+
+.record-dialog .dialog-footer-btn-secondary {
+  background: transparent !important;
+  color: #728a7c !important;
+  height: 46px !important;
+  border-radius: 23px !important;
+  border: none !important;
+}
+
+.record-dialog .dialog-footer-btn-secondary:hover {
+  background: #eef5f0 !important;
+  color: #2a483a !important;
+}

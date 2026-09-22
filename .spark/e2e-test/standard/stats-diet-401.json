@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"注册新账号并登录，进入统计页查看 diet/meals 接口是否 401"},{"id":2,"priority":"p0","description":"切换到统计-本月视图，检查是否有 401 接口报错"},{"id":3,"priority":"p1","description":"切换到统计-本周视图，检查各接口是否正常返回"}]}

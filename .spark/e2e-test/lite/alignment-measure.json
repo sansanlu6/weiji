@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"统计页周期切换栏getBoundingClientRect().top测量"},{"id":2,"priority":"p0","description":"记录中心页第一行卡片getBoundingClientRect().top测量"},{"id":3,"priority":"p1","description":"情绪记录页列表第一行卡片getBoundingClientRect().top测量"}]}
