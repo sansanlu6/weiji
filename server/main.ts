@@ -29,6 +29,7 @@ async function bootstrap() {
     }
 
     console.log('👉 [Step 3] 正在配置视图引擎...');
+    app.useStaticAssets(join(process.cwd(), 'dist/client'));
     app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
     app.setViewEngine('html');
     app.engine('html', hbsExpressEngine);
