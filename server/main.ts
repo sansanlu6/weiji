@@ -9,7 +9,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // 1. 双向补齐环境变量，确保底层框架与标准配置兼容
+  // 1. 环境变量双向补齐
   if (process.env.DATABASE_URL && !process.env.SUDA_DATABASE_URL) {
     process.env.SUDA_DATABASE_URL = process.env.DATABASE_URL;
   }
@@ -23,33 +23,12 @@ async function bootstrap() {
 
   const logger = new Logger('Bootstrap');
   try {
-    console.log('[Step 1] 开始创建 Nest 应用...');
+    console.log('👉 [Step 1] 开始创建 Nest 应用...');
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       abortOnError: false,
     });
 
-    // ------------------- 最顶层 Express 路由强行拦截 -------------------
-    // 必须在 configureApp 执行前，把静态资源直接暴露在原生 Express 最前端
-    const httpAdapter = app.getHttpAdapter();
-    const instance = httpAdapter.getInstance();
-
-    // 1) 优先拦截 /assets 下的所有 JS/CSS/图片 请求
-    instance.use(
-      '/assets',
-      express.static(join(process.cwd(), 'dist/client/assets'), {
-        fallthrough: false, // 找不到资源时直接报 404，不向下流转到 configureApp 渲染 index.html
-      }),
-    );
-
-    // 2) 托管 client 根目录下的静态资源（如 favicon.ico 等）
-    instance.use(
-      express.static(join(process.cwd(), 'dist/client'), {
-        index: false, // 禁止默认返回 index.html，防止覆盖路由
-      }),
-    );
-    // -------------------------------------------------------------------
-
-    console.log('[Step 2] 正在执行 configureApp...');
+    console.log('👉 [Step 2] 正在执行 configureApp...');
     try {
       await configureApp(app, { disableSwagger: true });
     } catch (err) {
@@ -61,6 +40,30 @@ async function bootstrap() {
     app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
     app.setViewEngine('html');
     app.engine('html', hbsExpressEngine);
+
+    // ------------------- 关键补丁：在 configureApp 之后压入 Express 队首 -------------------
+    const instance = app.getHttpAdapter().getInstance();
+    
+    // 创建一个专用的 Express 静态 router，强制在队首响应 assets 请求
+    const assetsRouter = express.Router();
+    assetsRouter.use(express.static(join(process.cwd(), 'dist/client/assets')));
+    
+    // 强制把这个 Router 插入到 Express 内部 stack 数组的最顶部 (index 0)
+    instance._router.stack.unshift({
+      match: (path: string) => path.startsWith('/assets'),
+      handle: (req: any, res: any, next: any) => {
+        if (req.url.startsWith('/assets')) {
+          // 剥离 /assets 前缀后再由 static 中间件处理
+          req.url = req.url.replace(/^\/assets/, '');
+          return express.static(join(process.cwd(), 'dist/client/assets'))(req, res, next);
+        }
+        next();
+      },
+      name: 'assets_force_override',
+      keys: [],
+      regexp: /^\/assets\/?(?=\/|$)/i,
+    });
+    // ---------------------------------------------------------------------------------------
 
     const host = '0.0.0.0';
     const port = Number(process.env.PORT || 10000);
