@@ -1,0 +1,47 @@
+[
+  {
+    "path": "/login"
+  },
+  {
+    "path": "/register"
+  },
+  {
+    "path": "/agreement/:type"
+  },
+  {
+    "path": "/"
+  },
+  {
+    "path": "/records/*"
+  },
+  {
+    "path": "/stats"
+  },
+  {
+    "path": "/goals"
+  },
+  {
+    "path": "/reminders"
+  },
+  {
+    "path": "/data"
+  },
+  {
+    "path": "/profile"
+  },
+  {
+    "path": "/profile/edit"
+  },
+  {
+    "path": "/report"
+  },
+  {
+    "path": "/achievements"
+  },
+  {
+    "path": "/settings"
+  },
+  {
+    "path": "/help"
+  }
+]
