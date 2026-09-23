@@ -29,7 +29,14 @@ async function bootstrap() {
     }
 
     console.log('👉 [Step 3] 正在配置视图引擎...');
+    // 1. 托管 client 根目录（处理 index.html、favicon 等）
     app.useStaticAssets(join(process.cwd(), 'dist/client'));
+
+    // 2. 关键补丁：显式映射 /assets 路径，确保 /assets/index-YzU8xM20.js 能被正确读取
+    app.useStaticAssets(join(process.cwd(), 'dist/client/assets'), {
+      prefix: '/assets',
+    });
+
     app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
     app.setViewEngine('html');
     app.engine('html', hbsExpressEngine);
