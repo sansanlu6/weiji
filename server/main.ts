@@ -9,8 +9,12 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // 环境变量双向补齐
   if (process.env.DATABASE_URL && !process.env.SUDA_DATABASE_URL) {
     process.env.SUDA_DATABASE_URL = process.env.DATABASE_URL;
+  }
+  if (process.env.SUDA_DATABASE_URL && !process.env.DATABASE_URL) {
+    process.env.DATABASE_URL = process.env.SUDA_DATABASE_URL;
   }
 
   const logger = new Logger('Bootstrap');
@@ -19,7 +23,7 @@ async function bootstrap() {
       abortOnError: false,
     });
 
-    // 💥 终极物理拦截：直接拦截底层 Express，只要是请求 assets 里的文件，直接读文件输出
+    // 💥 终极物理拦截：只要是请求 assets 里的文件，直接用原生 fs 读文件输出
     const server = app.getHttpAdapter().getInstance();
     server.use((req: any, res: any, next: any) => {
       if (req.url.includes('/assets/')) {
