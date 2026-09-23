@@ -35,14 +35,15 @@ async function bootstrap() {
     }
 
     console.log('👉 [Step 3] 正在配置视图引擎...');
-    // 1. 托管 client 根目录（处理 index.html、favicon 等）
-    app.useStaticAssets(join(process.cwd(), 'dist/client'));
-
-    // 2. 关键补丁：显式映射 /assets 路径，确保 /assets/index-YzU8xM20.js 能被正确读取
+    // 1. 优先托管静态资源（必须放在 setBaseViewsDir 前面，且明确指定 extensions）
     app.useStaticAssets(join(process.cwd(), 'dist/client/assets'), {
       prefix: '/assets',
     });
 
+    // 2. 托管整个 client 根目录（处理 favicon.ico、manifest 等）
+    app.useStaticAssets(join(process.cwd(), 'dist/client'));
+
+    // 3. 配置 HTML 视图渲染
     app.setBaseViewsDir(join(process.cwd(), 'dist/client'));
     app.setViewEngine('html');
     app.engine('html', hbsExpressEngine);
