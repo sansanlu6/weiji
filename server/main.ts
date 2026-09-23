@@ -1,13 +1,30 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { configureApp } from '@lark-apaas/fullstack-nestjs-core';
-import { join } from 'path';
+import { join, basename } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
 import { __express as hbsExpressEngine } from 'hbs';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+
+// 递归查找指定目录下的文件
+function findFileInDir(dir: string, targetFileName: string): string | null {
+  if (!fs.existsSync(dir)) return null;
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const fullPath = join(dir, file);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      const found = findFileInDir(fullPath, targetFileName);
+      if (found) return found;
+    } else if (file === targetFileName) {
+      return fullPath;
+    }
+  }
+  return null;
+}
 
 async function bootstrap() {
   if (process.env.DATABASE_URL && !process.env.SUDA_DATABASE_URL) {
@@ -23,42 +40,44 @@ async function bootstrap() {
       abortOnError: false,
     });
 
-    // 💥 物理拦截器：防 HTML 误返 + 静默处理 APaaS 框架打点接口
+    // 💥 全局底层 HTTP 拦截器
     const server = app.getHttpServer();
     server.on('request', (req: any, res: any) => {
       if (!req.url) return;
 
-      // 1. 修复双斜杠问题，例如 /spark/app//runtime -> /spark/app/runtime
+      // 1. 清理双斜杠
       if (req.url.includes('//')) {
         req.url = req.url.replace(/\/{2,}/g, '/');
       }
 
-      // 2. 拦截并 Mock 掉框架可观测性/打点/时间同步 API，避免返回 404 或返回 HTML 页面
+      // 2. 静默 Mock APaaS 监控打点与时间接口
       if (
         req.url.includes('/observability/') ||
         req.url.includes('/metrics/') ||
-        req.url.includes('/time-offset') ||
-        req.url.includes('/runtime/api/')
+        req.url.includes('/time-offset')
       ) {
-        // 如果是数据打点请求，静默返回成功 JSON，防止 SDK 报错卡死页面
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.statusCode = 200;
         return res.end(JSON.stringify({ code: 0, message: 'success', data: {} }));
       }
 
-      // 3. 原有物理拦截 /assets/ 静态文件
-      if (req.url.includes('/assets/')) {
-        const urlPath = req.url.split('?')[0];
-        const assetPath = urlPath.substring(urlPath.indexOf('/assets/'));
-        const filePath = join(process.cwd(), 'dist/client', assetPath);
+      // 3. 通用静态资源拦截（无论 URL 是否带 /assets/，只要请求 .js/.css 等资源，直接在 dist/client 全局物理匹配）
+      const cleanUrl = req.url.split('?')[0];
+      const ext = path.extname(cleanUrl).toLowerCase();
+      
+      if (['.js', '.css', '.svg', '.png', '.jpg', '.ico', '.woff', '.woff2'].includes(ext)) {
+        const fileName = basename(cleanUrl);
+        const distClientDir = join(process.cwd(), 'dist/client');
+        
+        // 全局搜寻该静态文件
+        const matchedFilePath = findFileInDir(distClientDir, fileName);
 
-        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-          const ext = path.extname(filePath).toLowerCase();
+        if (matchedFilePath) {
           if (ext === '.js') res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
           else if (ext === '.css') res.setHeader('Content-Type', 'text/css; charset=utf-8');
           else if (ext === '.svg') res.setHeader('Content-Type', 'image/svg+xml');
           
-          return fs.createReadStream(filePath).pipe(res);
+          return fs.createReadStream(matchedFilePath).pipe(res);
         }
       }
     });
