@@ -6,40 +6,77 @@ const _core = require("@nestjs/core");
 const _common = require("@nestjs/common");
 const _fullstacknestjscore = require("@lark-apaas/fullstack-nestjs-core");
 const _path = require("path");
+const _fs = /*#__PURE__*/ _interop_require_wildcard(require("fs"));
 const _hbs = require("hbs");
 const _appmodule = require("./app.module");
+function _getRequireWildcardCache(nodeInterop) {
+    if (typeof WeakMap !== "function") return null;
+    var cacheBabelInterop = new WeakMap();
+    var cacheNodeInterop = new WeakMap();
+    return (_getRequireWildcardCache = function(nodeInterop) {
+        return nodeInterop ? cacheNodeInterop : cacheBabelInterop;
+    })(nodeInterop);
+}
+function _interop_require_wildcard(obj, nodeInterop) {
+    if (!nodeInterop && obj && obj.__esModule) return obj;
+    if (obj === null || typeof obj !== "object" && typeof obj !== "function") return {
+        default: obj
+    };
+    var cache = _getRequireWildcardCache(nodeInterop);
+    if (cache && cache.has(obj)) return cache.get(obj);
+    var newObj = {
+        __proto__: null
+    };
+    var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
+    for(var key in obj){
+        if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) {
+            var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
+            if (desc && (desc.get || desc.set)) Object.defineProperty(newObj, key, desc);
+            else newObj[key] = obj[key];
+        }
+    }
+    newObj.default = obj;
+    if (cache) cache.set(obj, newObj);
+    return newObj;
+}
 async function bootstrap() {
-    // 在 main.ts 的 bootstrap 函数开头加入：
-    const rawDbUrl = process.env.DATABASE_URL || '';
-    // 隐藏密码打印，防止敏感信息泄露，但能看清结构
-    const maskedUrl = rawDbUrl.replace(/:([^:@]+)@/, ':****@');
-    console.log('👉 [Debug] 当前环境变量 DATABASE_URL 结构:', maskedUrl);
+    // 环境变量双向补齐
+    if (process.env.DATABASE_URL && !process.env.SUDA_DATABASE_URL) {
+        process.env.SUDA_DATABASE_URL = process.env.DATABASE_URL;
+    }
+    if (process.env.SUDA_DATABASE_URL && !process.env.DATABASE_URL) {
+        process.env.DATABASE_URL = process.env.SUDA_DATABASE_URL;
+    }
     const logger = new _common.Logger('Bootstrap');
     try {
-        console.log('👉 [Step 1] 开始创建 Nest 应用...');
         const app = await _core.NestFactory.create(_appmodule.AppModule, {
             abortOnError: false
         });
-        console.log('👉 [Step 2] 正在执行 configureApp...');
-        try {
-            await (0, _fullstacknestjscore.configureApp)(app, {
-                disableSwagger: true
-            });
-        } catch (err) {
-            console.error('❌ [Step 2 异常] configureApp 内部报错:', err);
-            throw err;
-        }
-        console.log('👉 [Step 3] 正在配置视图引擎...');
+        // 💥 终极物理拦截：只要是请求 assets 里的文件，直接用原生 fs 读文件输出
+        const server = app.getHttpAdapter().getInstance();
+        server.use((req, res, next)=>{
+            if (req.url.includes('/assets/')) {
+                const fileName = req.url.split('/assets/')[1].split('?')[0];
+                const filePath = (0, _path.join)(process.cwd(), 'dist/client/assets', fileName);
+                if (_fs.existsSync(filePath)) {
+                    if (fileName.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+                    if (fileName.endsWith('.css')) res.setHeader('Content-Type', 'text/css; charset=utf-8');
+                    return res.sendFile(filePath);
+                }
+            }
+            next();
+        });
+        await (0, _fullstacknestjscore.configureApp)(app, {
+            disableSwagger: true
+        });
         app.setBaseViewsDir((0, _path.join)(process.cwd(), 'dist/client'));
         app.setViewEngine('html');
         app.engine('html', _hbs.__express);
-        const host = '0.0.0.0';
-        const port = Number(process.env.PORT || 3000);
-        console.log(`👉 [Step 4] 准备绑定端口 ${port}...`);
-        await app.listen(port, host);
-        logger.log(`Server running on http://${host}:${port}`);
+        const port = Number(process.env.PORT || 10000);
+        await app.listen(port, '0.0.0.0');
+        logger.log(`Server running on port ${port}`);
     } catch (error) {
-        console.error('❌ 捕获到全局致命错误:', error);
+        console.error('❌ 致命错误:', error);
         process.exit(1);
     }
 }
