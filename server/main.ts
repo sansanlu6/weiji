@@ -36,9 +36,35 @@ async function bootstrap() {
         req.url = url.replace(/\/{2,}/g, '/');
       }
 
-      // Mock 框架打点接口
-      if (url.includes('/observability/') || url.includes('/metrics/') || url.includes('/time-offset')) {
-        return res.json({ code: 0, message: 'success', data: {} });
+      // 妙搭时间校准接口。
+      // 前端会执行 BigInt(response.data.timestampNs)，因此必须返回纳秒时间戳。
+      if (
+        url.includes('/current_server_timestamp') ||
+        url.includes('/time-offset')
+      ) {
+        const timestampNs = (
+          BigInt(Date.now()) * 1_000_000n
+        ).toString();
+
+        return res.json({
+          code: 0,
+          message: 'success',
+          data: {
+            timestampNs,
+          },
+        });
+      }
+
+      // 其他妙搭监控打点接口可以返回空数据
+      if (
+        url.includes('/observability/') ||
+        url.includes('/metrics/')
+      ) {
+        return res.json({
+          code: 0,
+          message: 'success',
+          data: {},
+        });
       }
 
       // 判定是否为静态资源请求
