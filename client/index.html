@@ -13,9 +13,10 @@
     rel="stylesheet"
   >
 
- <title>记录微小，留下痕迹</title>
-<meta property="og:title" content="记录微小，留下痕迹">
-<meta name="application-name" content="记录微小，留下痕迹">
+  <title>记录微小，留下痕迹</title>
+  <meta property="og:title" content="记录微小，留下痕迹">
+  <meta name="application-name" content="记录微小，留下痕迹">
+  <meta name="apple-mobile-web-app-title" content="记录微小，留下痕迹">
 
   <script>
     try {
@@ -31,13 +32,18 @@
       window.__platform__ = {};
     }
 
-    window.__platform__.appPublished =
-      window.__platform__.appPublished || {
-        app_info: {
-          show_badge: false
-        },
-        app_runtime_extra: {}
-      };
+    var appPublished = window.__platform__.appPublished || {};
+    var appInfo = appPublished.app_info || {};
+
+    window.__platform__.appPublished = {
+      ...appPublished,
+      app_info: {
+        ...appInfo,
+        app_name: '记录微小，留下痕迹',
+        show_badge: false
+      },
+      app_runtime_extra: appPublished.app_runtime_extra || {}
+    };
   </script>
 </head>
 
