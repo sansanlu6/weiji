@@ -19,9 +19,18 @@ print_time() {
 }
 
 # ==================== 步骤 0 ====================
-echo "🗑️  [0/6] 安装插件"
+echo "⏭️  [0/6] Action Plugin 初始化"
 STEP_START=$(node -e "console.log(Date.now())")
-npx fullstack-cli action-plugin init
+
+# 当前项目未使用 Action Plugin。
+# fullstack-cli action-plugin init 是交互式命令，
+# 不能在 Render 等非交互 CI 环境中执行。
+if [[ "${INIT_ACTION_PLUGIN:-false}" == "true" ]]; then
+  npx fullstack-cli action-plugin init
+else
+  echo "   跳过 Action Plugin 初始化"
+fi
+
 print_time $STEP_START
 echo ""
 
