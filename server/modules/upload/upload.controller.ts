@@ -37,15 +37,16 @@ export class UploadController {
     };
   }
 
-  @Get('image/:userId/:fileName')
+  @Get(['image/:fileName', 'image/:userId/:fileName'])
   async downloadImage(
-    @Param('userId') userId: string,
+    @Param('userId') userId: string | undefined,
     @Param('fileName') fileName: string,
     @Res({ passthrough: true }) response: Response,
   ) {
-    const image = await this.uploadService.downloadImage(
-      `${userId}/${fileName}`,
-    );
+    // 兼容旧数据：旧图片直接保存在 bucket 根目录，
+    // 新图片则保存在 userId 子目录。
+    const objectPath = userId ? `${userId}/${fileName}` : fileName;
+    const image = await this.uploadService.downloadImage(objectPath);
     response.setHeader('Content-Type', image.contentType);
     response.setHeader(
       'Cache-Control',

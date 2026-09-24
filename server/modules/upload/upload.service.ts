@@ -89,7 +89,16 @@ export class UploadService {
   }
 
   async downloadImage(objectPath: string) {
-    if (!/^[A-Za-z0-9_-]+\/[A-Za-z0-9._-]+$/.test(objectPath)) {
+    const pathSegments = objectPath.split('/');
+    const isSafePath = pathSegments.every(
+      (segment) =>
+        segment.length > 0 &&
+        segment !== '.' &&
+        segment !== '..' &&
+        /^[A-Za-z0-9._-]+$/.test(segment),
+    );
+
+    if (!isSafePath) {
       throw new BadRequestException('图片路径不合法');
     }
 
