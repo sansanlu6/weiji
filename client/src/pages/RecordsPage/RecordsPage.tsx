@@ -37,6 +37,7 @@ import SleepDialog from '@client/src/components/record-dialogs/SleepDialog';
 import MedicationDialog from '@client/src/components/record-dialogs/MedicationDialog';
 import MedicationIcon from '@client/src/components/icons/MedicationIcon';
 import PoopDialog from '@client/src/components/record-dialogs/PoopDialog';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 import type {
   SleepRecord, MoodRecord, PainRecord, DietRecord,
@@ -1029,7 +1030,7 @@ const RecordsPage: React.FC = () => {
         aria-hidden="true"
       >
         <Image
-          src="https://aka.doubaocdn.com/s/9jIrYowigU"
+          src={osmanthusBranch}
           alt=""
           style={{
             width: '100%',

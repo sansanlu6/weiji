@@ -26,6 +26,7 @@ import PainDialog from '@client/src/components/record-dialogs/PainDialog';
 import WaterDialog from '@client/src/components/record-dialogs/WaterDialog';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 const quickActions = [
   { type: 'water' as const, icon: Droplet, label: '喝水', bg: 'var(--color-water-soft)', color: 'var(--color-water)' },
@@ -661,7 +662,7 @@ const HomePage: React.FC = () => {
         {/* 右上角桂花枝 */}
         <div className="osmanthus-corner" aria-hidden="true">
           <Image
-            src="https://aka.doubaocdn.com/s/9jIrYowigU"
+            src={osmanthusBranch}
             alt=""
             className="osmanthus-img"
           />

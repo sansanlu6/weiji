@@ -6,6 +6,7 @@ import HalfYearView from './views/HalfYearView';
 import YearView from './views/YearView';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 type ViewKey = 'week' | 'month' | 'halfyear' | 'year';
 
@@ -64,7 +65,7 @@ const StatsPage: React.FC = () => {
         aria-hidden="true"
       >
         <Image
-          src="https://aka.doubaocdn.com/s/9jIrYowigU"
+          src={osmanthusBranch}
           alt=""
           style={{
             width: '100%',

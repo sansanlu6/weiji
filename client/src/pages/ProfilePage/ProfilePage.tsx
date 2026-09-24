@@ -25,6 +25,7 @@ import { logger } from '@lark-apaas/client-toolkit/logger';
 import { achievementsApi, profileApi } from '@client/src/api';
 import type { LucideIcon } from 'lucide-react';
 import type { AchievementItem, ProfileSummary, UserProfileInfo } from '@shared/api.interface';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 interface QuickMenuItem {
   label: string;
@@ -148,7 +149,7 @@ const ProfilePage: React.FC = () => {
         aria-hidden="true"
       >
         <Image
-          src="https://aka.doubaocdn.com/s/9jIrYowigU"
+          src={osmanthusBranch}
           alt=""
           style={{
             width: '100%',

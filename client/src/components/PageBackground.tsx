@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { Image } from '@client/src/components/ui/image';
 import newDesktopBg from '@client/src/assets/bg-desktop-new.png';
 import mobileAppBg from '@client/src/assets/mobile-app-bg.png';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
-const OSMANTHUS_IMG = 'https://aka.doubaocdn.com/s/9jIrYowigU';
+const OSMANTHUS_IMG = osmanthusBranch;
 
 const PageBackground: React.FC = () => {
   useEffect(() => {

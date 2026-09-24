@@ -24,6 +24,7 @@ import dayjs from 'dayjs';
 import type { AchievementItem } from '@shared/api.interface';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   trophy: Trophy,
@@ -115,7 +116,7 @@ const AchievementsPage: React.FC = () => {
         aria-hidden="true"
       >
         <Image
-          src="https://aka.doubaocdn.com/s/9jIrYowigU"
+          src={osmanthusBranch}
           alt=""
           style={{
             width: '100%',

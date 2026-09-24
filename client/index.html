@@ -4,17 +4,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="icon" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
+
   <title>微迹 - 记录微小，留下痕迹</title>
+
   <script>
     try {
       window.__platform__ = JSON.parse('{{{__platform__}}}');
     } catch (e) {
-      console.error('Failed to parse __platform__', e);
+      window.__platform__ = {};
     }
+
+    if (
+      !window.__platform__ ||
+      typeof window.__platform__ !== 'object'
+    ) {
+      window.__platform__ = {};
+    }
+
+    window.__platform__.appPublished =
+      window.__platform__.appPublished || {
+        app_info: {
+          show_badge: false
+        },
+        app_runtime_extra: {}
+      };
   </script>
 </head>
 

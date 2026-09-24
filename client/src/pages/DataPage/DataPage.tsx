@@ -55,6 +55,7 @@ import {
   batchPermanentDelete,
 } from '@/api/data';
 import type { UnifiedRecord, RecycleRecord } from '@shared/api.interface';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 type TabKey = 'all' | 'recycle';
 
@@ -422,7 +423,7 @@ const DataPage: React.FC = () => {
          aria-hidden="true"
        >
          <Image
-           src="https://aka.doubaocdn.com/s/9jIrYowigU"
+           src={osmanthusBranch}
            alt=""
            style={{
              width: '100%',

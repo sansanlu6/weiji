@@ -11,6 +11,7 @@ import { Image } from '@client/src/components/ui/image';
 import ImageEditor from '@client/src/components/ui/image-editor';
 import PageBackground from '@client/src/components/PageBackground';
 import { useImageDedup } from '@client/src/hooks/useImageDedup';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 const ProfileEditPage: React.FC = () => {
   const navigate = useNavigate();
@@ -154,7 +155,7 @@ const ProfileEditPage: React.FC = () => {
         aria-hidden="true"
       >
         <Image
-          src="https://aka.doubaocdn.com/s/9jIrYowigU"
+          src={osmanthusBranch}
           alt=""
           style={{
             width: '100%',

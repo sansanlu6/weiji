@@ -9,6 +9,7 @@ import GoalEditDialog from '@client/src/components/GoalEditDialog';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
 import type { LucideIcon } from 'lucide-react';
+import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
 
 interface GoalDisplayConfig {
   goalType: string;
@@ -144,7 +145,7 @@ const GoalsPage: React.FC = () => {
           aria-hidden="true"
         >
           <Image
-            src="https://aka.doubaocdn.com/s/9jIrYowigU"
+            src={osmanthusBranch}
             alt=""
             style={{
               width: '100%',
@@ -217,7 +218,7 @@ const GoalsPage: React.FC = () => {
         aria-hidden="true"
       >
         <Image
-          src="https://aka.doubaocdn.com/s/9jIrYowigU"
+          src={osmanthusBranch}
           alt=""
           style={{
             width: '100%',

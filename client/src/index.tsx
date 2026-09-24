@@ -16,7 +16,7 @@ const CLIENT_BASE_PATH = '/';
 const MainApp = () => {
   return (
     <BrowserRouter basename={CLIENT_BASE_PATH}>
-      <AppContainer defaultTheme="light">
+      <AppContainer defaultTheme="light" enableAuth={false}>
         <ErrorBoundary
           fallbackRender={({ error, resetErrorBoundary }) => (
             <ErrorRender
