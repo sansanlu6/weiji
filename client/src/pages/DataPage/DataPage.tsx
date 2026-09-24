@@ -438,7 +438,7 @@ const DataPage: React.FC = () => {
       {/* 标题 */}
       <header className="flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/profile', { replace: true })}
           className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors"
           aria-label="返回"
         >

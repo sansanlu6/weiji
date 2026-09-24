@@ -18,7 +18,7 @@ const HelpPage: React.FC = () => {
         <div className="space-y-6 relative z-10 py-2">
           <header className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/profile', { replace: true })}
               className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-foreground" strokeWidth={1.8} />

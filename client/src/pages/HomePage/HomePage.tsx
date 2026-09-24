@@ -12,7 +12,7 @@ import {
   MoonStar,
 } from 'lucide-react';
 import { logger } from '@lark-apaas/client-toolkit/logger';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { sleepApi } from '@client/src/api';
 import type { TodayOverview, RecentRecord, RecordType } from '@shared/api.interface';
 import { RECORD_META } from '@client/src/utils/record-constants';
@@ -46,17 +46,35 @@ const moduleColorMap: Record<string, { bg: string; color: string }> = {
   poop: { bg: '#e8f0ec', color: '#7ba89a' },
 };
 
+interface HomePageCacheEntry {
+  overview: TodayOverview;
+  recent: RecentRecord[];
+  cachedAt: number;
+}
+
+const HOME_CACHE_TTL_MS = 2 * 60 * 1000;
+const homePageCache = new Map<string, HomePageCacheEntry>();
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { isAuthenticated } = useAuth();
-  const [overview, setOverview] = useState<TodayOverview | null>(null);
-  const [recent, setRecent] = useState<RecentRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user } = useAuth();
+  const cachedAtMount = user?.id ? homePageCache.get(user.id) : undefined;
+  const initialCache =
+    cachedAtMount && Date.now() - cachedAtMount.cachedAt < HOME_CACHE_TTL_MS
+      ? cachedAtMount
+      : undefined;
+  const [overview, setOverview] = useState<TodayOverview | null>(
+    initialCache?.overview ?? null,
+  );
+  const [recent, setRecent] = useState<RecentRecord[]>(
+    initialCache?.recent ?? [],
+  );
+  const [loading, setLoading] = useState(!initialCache);
   const [error, setError] = useState<string | null>(null);
   const [dialogType, setDialogType] = useState<RecordType | null>(null);
 
   const fetchData = async (): Promise<void> => {
+    if (!user?.id) return;
     try {
       setLoading(true);
       setError(null);
@@ -66,6 +84,11 @@ const HomePage: React.FC = () => {
       ]);
       setOverview(ov);
       setRecent(rec);
+      homePageCache.set(user.id, {
+        overview: ov,
+        recent: rec,
+        cachedAt: Date.now(),
+      });
     } catch (err) {
       logger.error('加载首页数据失败', err as Error);
       setError('加载失败，请稍后重试');
@@ -75,9 +98,19 @@ const HomePage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !user?.id) return;
+
+    const cached = homePageCache.get(user.id);
+    if (cached && Date.now() - cached.cachedAt < HOME_CACHE_TTL_MS) {
+      setOverview(cached.overview);
+      setRecent(cached.recent);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     void fetchData();
-  }, [isAuthenticated, location.pathname]);
+  }, [isAuthenticated, user?.id]);
 
   const openDialog = (type: RecordType): void => {
     setDialogType(type);

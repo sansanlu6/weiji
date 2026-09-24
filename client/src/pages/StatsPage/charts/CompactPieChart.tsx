@@ -11,6 +11,11 @@ const CompactPieChart: React.FC<CompactPieChartProps> = ({ data, colors, size = 
   const option: EChartsOption = {
     tooltip: {
       trigger: 'item',
+      renderMode: 'html',
+      appendToBody: true,
+      confine: false,
+      extraCssText:
+        'z-index: 10000; max-width: 220px; box-shadow: 0 6px 24px rgba(0,0,0,0.12); border-radius: 8px;',
       formatter: (params) => {
         const p = params as { name: string; value: number; percent?: number };
         return `${p.name}<br/>${p.value} (${p.percent?.toFixed(0) ?? 0}%)`;

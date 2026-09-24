@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { resolveImageUrl } from '@client/src/utils/image-url';
 type ImageFormat = 'jpg' | 'png' | 'webp' | 'bmp' | 'gif' | 'tiff';
 
 type NativeImgProps = React.ComponentPropsWithoutRef<'img'>;
@@ -111,18 +112,19 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
     },
     ref,
   ) => {
+    const resolvedSrc = typeof src === 'string' ? resolveImageUrl(src) : src;
     const defaultFormat = React.useMemo(
       () => (supportWebp() ? 'webp' : undefined),
       [],
     );
 
     // 当 src 不在白名单时，直接渲染原生 img，保留所有原生属性
-    if (typeof src !== 'string' || !isTargetSrc(src)) {
+    if (typeof resolvedSrc !== 'string' || !isTargetSrc(resolvedSrc)) {
       return (
         <img
           {...rest}
           ref={ref}
-          src={src}
+          src={resolvedSrc}
           width={width}
           height={height}
           sizes={sizes}
@@ -144,7 +146,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
     const srcSet =
       userSrcSet ??
       buildSrcSet(
-        src,
+        resolvedSrc,
         breakpoints,
         format ?? (defaultFormat as ImageFormat),
         quality,
@@ -152,7 +154,7 @@ export const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         sizes,
       );
 
-    const baseSrc = applyParamsToUrl(src, {
+    const baseSrc = applyParamsToUrl(resolvedSrc, {
       resize: numericWidth ? `w_${numericWidth}` : undefined,
       quality: `Q_${quality}`,
       format: format ?? defaultFormat,

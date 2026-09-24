@@ -270,7 +270,7 @@ const MoodRecordList: React.FC = () => {
           }}
         />
         <button
-          onClick={() => navigate('/records')}
+          onClick={() => navigate('/records', { replace: true })}
           className="relative z-30 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-primary-light hover:text-primary transition-colors shadow-[0_2px_10px_rgba(26_59_42_0.12)]"
           style={{ color: '#2a483a' }}
         >
@@ -779,7 +779,7 @@ const GenericRecordList: React.FC<{ type: RecordType }> = ({ type }) => {
           }}
         />
         <button
-          onClick={() => navigate('/records')}
+          onClick={() => navigate('/records', { replace: true })}
           className="relative z-30 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-primary-light hover:text-primary transition-colors shadow-[0_2px_10px_rgba(26_59_42_0.12)]"
           style={{ color: '#2a483a' }}
         >

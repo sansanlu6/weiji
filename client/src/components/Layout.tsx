@@ -75,6 +75,7 @@ const Layout = () => {
               <NavLink
                 key={path}
                 to={path}
+                replace
                 className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
@@ -97,6 +98,7 @@ const Layout = () => {
                <NavLink
                  key={path}
                  to={path}
+                 replace
                  className={`flex flex-col items-center justify-center gap-1 py-2 rounded-lg transition-all duration-300 text-xs ${
                    isActive
                      ? 'text-[#274737] font-semibold'

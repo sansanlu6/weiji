@@ -64,7 +64,10 @@ const ProfileEditPage: React.FC = () => {
       });
       setProfile(updated);
       toast.success('保存成功');
-      setTimeout(() => navigate('/profile'), 300);
+      setTimeout(
+        () => navigate('/profile', { replace: true, state: { refreshProfile: true } }),
+        300,
+      );
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || '保存失败';
       toast.error(msg);
@@ -281,7 +284,7 @@ const ProfileEditPage: React.FC = () => {
 
       <header className="edit-page-header flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/profile', { replace: true })}
           aria-label="返回"
           className="w-10 h-10 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center hover:bg-primary-light hover:text-primary transition-colors shadow-[0_2px_10px_rgba(26_59_42_0.12)] flex-shrink-0"
           style={{ color: '#2a483a' }}

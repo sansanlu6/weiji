@@ -20,7 +20,7 @@ import {
   Lock,
   Check,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import { achievementsApi, profileApi } from '@client/src/api';
 import type { LucideIcon } from 'lucide-react';
@@ -74,17 +74,60 @@ const categoryColors: Record<string, { bg: string; text: string; bgColor: string
   poop: { bg: 'bg-module-poop-bg', text: 'text-module-poop', bgColor: 'hsl(100 45% 88%)', textColor: 'hsl(100 40% 42%)' },
 };
 
+interface ProfilePageCacheEntry {
+  achievements: AchievementItem[];
+  profileSummary: ProfileSummary;
+  userProfile: UserProfileInfo;
+  cachedAt: number;
+}
+
+const PROFILE_CACHE_TTL_MS = 2 * 60 * 1000;
+const profilePageCache = new Map<string, ProfilePageCacheEntry>();
+
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
-  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
-  const [profileSummary, setProfileSummary] = useState<ProfileSummary | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfileInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const refreshProfile = Boolean(
+    (location.state as { refreshProfile?: boolean } | null)?.refreshProfile,
+  );
+  const cachedAtMount = user?.id ? profilePageCache.get(user.id) : undefined;
+  const initialCache =
+    !refreshProfile &&
+    cachedAtMount &&
+    Date.now() - cachedAtMount.cachedAt < PROFILE_CACHE_TTL_MS
+      ? cachedAtMount
+      : undefined;
+  const [achievements, setAchievements] = useState<AchievementItem[]>(
+    initialCache?.achievements ?? [],
+  );
+  const [profileSummary, setProfileSummary] = useState<ProfileSummary | null>(
+    initialCache?.profileSummary ?? null,
+  );
+  const [userProfile, setUserProfile] = useState<UserProfileInfo | null>(
+    initialCache?.userProfile ?? null,
+  );
+  const [loading, setLoading] = useState(!initialCache);
 
   useEffect(() => {
+    if (!user?.id) return;
+
+    const cached = profilePageCache.get(user.id);
+    if (
+      !refreshProfile &&
+      cached &&
+      Date.now() - cached.cachedAt < PROFILE_CACHE_TTL_MS
+    ) {
+      setAchievements(cached.achievements);
+      setProfileSummary(cached.profileSummary);
+      setUserProfile(cached.userProfile);
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async (): Promise<void> => {
       try {
+        setLoading(true);
         const [achRes, summaryRes, profileRes] = await Promise.all([
           achievementsApi.getAchievements(),
           profileApi.getProfileSummary(),
@@ -93,6 +136,12 @@ const ProfilePage: React.FC = () => {
         setAchievements(achRes.items);
         setProfileSummary(summaryRes);
         setUserProfile(profileRes);
+        profilePageCache.set(user.id, {
+          achievements: achRes.items,
+          profileSummary: summaryRes,
+          userProfile: profileRes,
+          cachedAt: Date.now(),
+        });
       } catch (err) {
         logger.error('加载个人数据失败', err as Error);
       } finally {
@@ -100,7 +149,7 @@ const ProfilePage: React.FC = () => {
       }
     };
     void fetchData();
-  }, []);
+  }, [refreshProfile, user?.id]);
 
   const handleItemClick = (item: QuickMenuItem): void => {
     logger.info(`点击功能入口: ${item.label}`);

@@ -13,6 +13,13 @@ const POOP_COLOR_MAP: Record<string, string> = {
   diarrhea: '#E8B4B4',
   loose: '#B5C5D6',
   other: '#D0D0D0',
+  正常: '#7CAE7A',
+  干结: '#A0522D',
+  偏硬: '#A0522D',
+  便秘: '#C4956A',
+  腹泻: '#E8B4B4',
+  偏稀: '#B5C5D6',
+  其他: '#D0D0D0',
 };
 
 const TYPE_LABELS: Record<string, string> = {

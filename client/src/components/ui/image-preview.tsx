@@ -4,6 +4,7 @@ import {
 } from '@client/src/components/ui/dialog';
 import { X, ZoomIn, ZoomOut } from 'lucide-react';
 import { logger } from '@lark-apaas/client-toolkit/logger';
+import { resolveImageUrl } from '@client/src/utils/image-url';
 
 interface ImagePreviewProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ImagePreviewProps {
 }
 
 const ImagePreview: React.FC<ImagePreviewProps> = ({ open, src, alt = '图片', onClose }) => {
+  const resolvedSrc = resolveImageUrl(src);
   const imgRef = useRef<HTMLImageElement>(null);
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -136,7 +138,7 @@ const ImagePreview: React.FC<ImagePreviewProps> = ({ open, src, alt = '图片', 
         >
           <img
             ref={imgRef}
-            src={src}
+            src={resolvedSrc}
             alt={alt}
             onLoad={handleImgLoad}
             onError={handleImgError}

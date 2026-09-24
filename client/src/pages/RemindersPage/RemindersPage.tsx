@@ -227,7 +227,7 @@ const RemindersPage: React.FC = () => {
        <div className="space-y-6 relative z-10 font-sans-hei">
         <header className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/profile', { replace: true })}
             className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors"
             aria-label="返回"
           >
@@ -287,7 +287,7 @@ const RemindersPage: React.FC = () => {
        <div className="space-y-6 relative z-10">
        <header className="flex items-center gap-3">
          <button
-           onClick={() => navigate(-1)}
+           onClick={() => navigate('/profile', { replace: true })}
            className="w-10 h-10 rounded-full bg-card shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors"
            aria-label="返回"
          >

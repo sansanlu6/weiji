@@ -25,7 +25,7 @@ const SettingsPage: React.FC = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleBack = (): void => {
-    navigate('/profile');
+    navigate('/profile', { replace: true });
   };
 
   const handleChangePassword = (): void => {
