@@ -23,9 +23,15 @@ async function bootstrap() {
       abortOnError: false,
     });
 
-    const clientDir = resolve(process.cwd(), 'dist/client');
-    console.log('🔍 [Debug 根目录检测] 当前工作目录 process.cwd():', process.cwd());
-    console.log('🔍 [Debug 静态资源目录] 预设 clientDir:', clientDir);
+    const assetsDir = resolve(process.cwd(), 'client');
+    const viewsDir = resolve(process.cwd(), 'dist/client');
+
+    console.log('当前工作目录:', process.cwd());
+    console.log('静态资源目录:', assetsDir);
+    console.log('HTML 模板目录:', viewsDir);
+    #const clientDir = resolve(process.cwd(), 'dist/client');
+    #console.log('🔍 [Debug 根目录检测] 当前工作目录 process.cwd():', process.cwd());
+    #console.log('🔍 [Debug 静态资源目录] 预设 clientDir:', clientDir);
 
     // 💥 1. 严格的静态资源拦截器（精准打印 + 拒绝 HTML 伪装）
     app.use((req: any, res: any, next: any) => {
@@ -75,9 +81,16 @@ async function bootstrap() {
         const cleanPath = url.split('?')[0];
         // 尝试在多个可能的目录中寻找该文件
         const possiblePaths = [
-          join(clientDir, cleanPath),
-          join(clientDir, 'assets', cleanPath.replace(/^.*\/assets\//, '')),
-          join(clientDir, cleanPath.replace(/^.*\/app\//, ''))
+          join(assetsDir, cleanPath),
+          join(
+            assetsDir,
+            'assets',
+            cleanPath.replace(/^.*\/assets\//, ''),
+          ),
+          join(
+            assetsDir,
+            cleanPath.replace(/^.*\/app\//, ''),
+          ),
         ];
 
         let foundPath: string | null = null;
@@ -110,7 +123,7 @@ async function bootstrap() {
     await configureApp(app, { disableSwagger: true });
 
     // 💥 3. 视图引擎配置
-    app.setBaseViewsDir(clientDir);
+    app.setBaseViewsDir(viewsDir);
     app.setViewEngine('html');
     app.engine('html', hbsExpressEngine);
 
