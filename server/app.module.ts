@@ -10,23 +10,27 @@ import { HealthGoalsModule } from './modules/health-goals/health-goals.module';
 import { HealthRemindersModule } from './modules/health-reminders/health-reminders.module';
 import { HealthDataModule } from './modules/health-data/health-data.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DataPaasModule } from '@lark-apaas/nestjs-datapaas';
 
 @Module({
   imports: [
-    // 平台 Module，提供平台能力
     PlatformModule.forRoot(),
-    // ====== @route-section: business-modules START ======
-    // Place all business modules here.Do NOT add fallback modules here.
+
+    // 使用普通 Supabase 数据库连接，
+    // 不使用妙搭平台的 anon_ / authenticated_ 数据库角色
+    DataPaasModule.forRoot({
+      connectionString: process.env.SUDA_DATABASE_URL ?? '',
+      ssl: 'require',
+      autoContext: false,
+    }),
+
     HealthRecordsModule,
     HealthStatsModule,
     HealthGoalsModule,
     HealthRemindersModule,
     HealthDataModule,
     AuthModule,
-    // ====== @route-section: business-modules END ======
 
-    // ⚠️ @route-order: last
-    // ViewModule is the fallback route module, must be registered last.
     ViewModule,
   ],
   providers: [
