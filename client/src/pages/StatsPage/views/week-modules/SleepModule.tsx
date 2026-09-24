@@ -8,10 +8,16 @@ interface SleepModuleProps {
 
 const SleepModule: React.FC<SleepModuleProps> = ({ data }) => {
   const days = ['一', '二', '三', '四', '五', '六', '日'];
-  const hoursByDay: number[] = days.map((_, i) => {
-    const day = data.dailyHours[i];
-    return day ? day.hours : 0;
-  });
+  const hoursByDay: number[] = new Array(7).fill(0);
+  for (const item of data.dailyHours) {
+    const [year, month, day] = item.date.split('-').map(Number);
+    if (!year || !month || !day) continue;
+
+    // 使用 UTC 构造纯日期，避免手机时区把星期几再次偏移。
+    const weekDay = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+    const mondayIndex = weekDay === 0 ? 6 : weekDay - 1;
+    hoursByDay[mondayIndex] += item.hours;
+  }
 
   const meetRate = Math.round((data.meetTargetDays / 7) * 100);
 

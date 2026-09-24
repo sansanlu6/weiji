@@ -122,6 +122,28 @@ export class HealthStatsService {
     return sql<string>`to_char(${dateExpr} AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD')`;
   }
 
+  /**
+   * 睡眠归属规则（Asia/Shanghai）：
+   * - 20:00–次日 04:59：属于 20:00 所在日的夜间睡眠；
+   * - 05:00–19:59：属于当天的白天睡眠。
+   * 对统计日期而言，等价于将入睡时间减去 5 小时后取日期。
+   */
+  private sleepDay(dateExpr: any = healthSleep.sleepTime) {
+    return sql<string>`to_char(
+      (${dateExpr} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours',
+      'YYYY-MM-DD'
+    )`;
+  }
+
+  /** 把统计日的边界换算成实际入睡时间的 05:00 切换点。 */
+  private getSleepRange(start: Date, end: Date): { start: Date; end: Date } {
+    const cutoffMs = 5 * 60 * 60 * 1000;
+    return {
+      start: new Date(start.getTime() + cutoffMs),
+      end: new Date(end.getTime() + cutoffMs),
+    };
+  }
+
   private formatTimeFromIso(isoStr: string | null | undefined): string {
     if (!isoStr) return '';
     const d = new Date(isoStr);
@@ -140,7 +162,8 @@ export class HealthStatsService {
     rangeDays: number,
   ): Promise<SleepDayStat[]> {
     const { start, end } = this.getDateRange(rangeDays);
-    const dayKey = this.dateDay(healthSleep.wakeTime);
+    const sleepRange = this.getSleepRange(start, end);
+    const dayKey = this.sleepDay();
 
     const rows = await this.db
       .select({
@@ -160,8 +183,8 @@ export class HealthStatsService {
       .where(
         and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, start),
-          lt(healthSleep.wakeTime, end),
+          gte(healthSleep.sleepTime, sleepRange.start),
+          lt(healthSleep.sleepTime, sleepRange.end),
         ),
       )
       .groupBy(sql`date`)
@@ -347,11 +370,12 @@ export class HealthStatsService {
     rangeDays: number,
   ): Promise<CorrelationResult> {
     const { start, end } = this.getDateRange(rangeDays);
+    const sleepRange = this.getSleepRange(start, end);
 
-    // 按天统计睡眠时长（按起床时间归类到当天）
+    // 按入睡所属的“当晚”统计睡眠时长。
     const sleepRows = await this.db
       .select({
-        date: this.dateDay(healthSleep.wakeTime).as('date'),
+        date: this.sleepDay().as('date'),
         durationMinutes:
           sql<number>`COALESCE(SUM(${healthSleep.durationMinutes}), 0)`.as(
             'duration_minutes',
@@ -361,8 +385,8 @@ export class HealthStatsService {
       .where(
         and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, start),
-          lt(healthSleep.wakeTime, end),
+          gte(healthSleep.sleepTime, sleepRange.start),
+          lt(healthSleep.sleepTime, sleepRange.end),
         ),
       )
       .groupBy(sql`date`);
@@ -485,6 +509,7 @@ export class HealthStatsService {
     rangeDays: number,
   ): Promise<CorrelationResult> {
     const { start, end } = this.getDateRange(rangeDays);
+    const sleepRange = this.getSleepRange(start, end);
 
     const exerciseRows = await this.db
       .select({
@@ -504,10 +529,10 @@ export class HealthStatsService {
       )
       .groupBy(sql`date`);
 
-    // 睡眠按起床日期归类
+    // 睡眠按入睡所属的“当晚”归类。
     const sleepRows = await this.db
       .select({
-        date: this.dateDay(healthSleep.wakeTime).as('date'),
+        date: this.sleepDay().as('date'),
         durationMinutes:
           sql<number>`COALESCE(SUM(${healthSleep.durationMinutes}), 0)`.as(
             'duration_minutes',
@@ -517,8 +542,8 @@ export class HealthStatsService {
       .where(
         and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, start),
-          lt(healthSleep.wakeTime, end),
+          gte(healthSleep.sleepTime, sleepRange.start),
+          lt(healthSleep.sleepTime, sleepRange.end),
         ),
       )
       .groupBy(sql`date`);
@@ -639,6 +664,7 @@ export class HealthStatsService {
     const { start, end } = this.parseFullDayRange(startDate, endDate);
     const safeStart = start ?? this.getDateRange(30).start;
     const safeEnd = end ?? new Date();
+    const sleepRange = this.getSleepRange(safeStart, safeEnd);
 
     const configs = await this.getUserAlertConfigMap(userId);
     const alerts: AlertRecord[] = [];
@@ -650,7 +676,7 @@ export class HealthStatsService {
     if (sleepEnabled) {
       const sleepRows = await this.db
         .select({
-          date: this.dateDay(healthSleep.wakeTime).as('date'),
+          date: this.sleepDay().as('date'),
           totalMinutes:
             sql<number>`COALESCE(SUM(${healthSleep.durationMinutes}), 0)`.as(
               'total_minutes',
@@ -660,8 +686,8 @@ export class HealthStatsService {
         .where(
           and(
             this.baseFilter(healthSleep, userId),
-            gte(healthSleep.wakeTime, safeStart),
-            lt(healthSleep.wakeTime, safeEnd),
+            gte(healthSleep.sleepTime, sleepRange.start),
+            lt(healthSleep.sleepTime, sleepRange.end),
           ),
         )
         .groupBy(sql`date`);
@@ -941,6 +967,9 @@ export class HealthStatsService {
     const safeEnd = end!;
     const startIso = safeStart.toISOString();
     const endIso = safeEnd.toISOString();
+    const sleepRange = this.getSleepRange(safeStart, safeEnd);
+    const sleepStartIso = sleepRange.start.toISOString();
+    const sleepEndIso = sleepRange.end.toISOString();
 
     const [
       diet,
@@ -967,7 +996,7 @@ export class HealthStatsService {
       this.db.execute(sql`
         SELECT
           to_char(
-            date_trunc('week', daily_sleep.wake_time AT TIME ZONE 'Asia/Shanghai'),
+            date_trunc('week', daily_sleep.sleep_day),
             'YYYY-MM-DD'
           ) AS week_start,
           COUNT(*)::int AS total_days,
@@ -976,15 +1005,18 @@ export class HealthStatsService {
           SUM(CASE WHEN daily_sleep.duration_minutes < 360 THEN 1 ELSE 0 END)::int AS poor
         FROM (
           SELECT
-            ${healthSleep.wakeTime},
+            date_trunc(
+              'day',
+              (${healthSleep.sleepTime} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours'
+            ) AS sleep_day,
             SUM(${healthSleep.durationMinutes}) AS duration_minutes
           FROM ${healthSleep}
           WHERE ${and(
             this.baseFilter(healthSleep, userId),
-            gte(healthSleep.wakeTime, sql`${startIso}::timestamptz`),
-            lt(healthSleep.wakeTime, sql`${endIso}::timestamptz`),
+            gte(healthSleep.sleepTime, sql`${sleepStartIso}::timestamptz`),
+            lt(healthSleep.sleepTime, sql`${sleepEndIso}::timestamptz`),
           )}
-          GROUP BY date_trunc('day', ${healthSleep.wakeTime} AT TIME ZONE 'Asia/Shanghai'), ${healthSleep.wakeTime}
+          GROUP BY sleep_day
         ) AS daily_sleep
         GROUP BY week_start
         ORDER BY week_start
@@ -1251,7 +1283,8 @@ export class HealthStatsService {
     start: Date,
     end: Date,
   ): Promise<WeeklyDetailStats['sleep']> {
-    const dayKey = this.dateDay(healthSleep.wakeTime);
+    const sleepRange = this.getSleepRange(start, end);
+    const dayKey = this.sleepDay();
     const rows = await this.db
       .select({
         date: dayKey.as('date'),
@@ -1264,8 +1297,8 @@ export class HealthStatsService {
       .where(
         and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, start),
-          lt(healthSleep.wakeTime, end),
+          gte(healthSleep.sleepTime, sleepRange.start),
+          lt(healthSleep.sleepTime, sleepRange.end),
         ),
       )
       .groupBy(sql`date`)
@@ -1674,6 +1707,9 @@ export class HealthStatsService {
     );
     const startIso = rangeStart.toISOString();
     const endIso = rangeEnd.toISOString();
+    const halfYearSleepRange = this.getSleepRange(rangeStart, rangeEnd);
+    const sleepStartIso = halfYearSleepRange.start.toISOString();
+    const sleepEndIso = halfYearSleepRange.end.toISOString();
 
     // 8个维度并行查询
     const [
@@ -1687,15 +1723,21 @@ export class HealthStatsService {
       waterRows,
       waterGoalRow,
     ] = await Promise.all([
-      // ----- 睡眠：按月聚合每天的睡眠记录（按 wake_time 日期算）-----
+      // ----- 睡眠：按入睡所属的“当晚”聚合 -----
       this.db.execute(sql`
         SELECT
           to_char(
-            date_trunc('month', ${healthSleep.wakeTime} AT TIME ZONE 'Asia/Shanghai'),
+            date_trunc(
+              'month',
+              (${healthSleep.sleepTime} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours'
+            ),
             'YYYY-MM'
           ) AS month_key,
           SUM(${healthSleep.durationMinutes})::int AS total_minutes,
-          COUNT(DISTINCT date_trunc('day', ${healthSleep.wakeTime} AT TIME ZONE 'Asia/Shanghai'))::int AS record_days,
+          COUNT(DISTINCT date_trunc(
+            'day',
+            (${healthSleep.sleepTime} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours'
+          ))::int AS record_days,
           SUM(CASE WHEN ${healthSleep.durationMinutes} >= 450 THEN 1 ELSE 0 END)::int AS good,
           SUM(CASE WHEN ${healthSleep.durationMinutes} >= 360 AND ${healthSleep.durationMinutes} < 450 THEN 1 ELSE 0 END)::int AS medium,
           SUM(CASE WHEN ${healthSleep.durationMinutes} < 360 THEN 1 ELSE 0 END)::int AS poor,
@@ -1703,8 +1745,8 @@ export class HealthStatsService {
         FROM ${healthSleep}
         WHERE ${and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, sql`${startIso}::timestamptz`),
-          lt(healthSleep.wakeTime, sql`${endIso}::timestamptz`),
+          gte(healthSleep.sleepTime, sql`${sleepStartIso}::timestamptz`),
+          lt(healthSleep.sleepTime, sql`${sleepEndIso}::timestamptz`),
         )}
         GROUP BY month_key
         ORDER BY month_key
@@ -2264,6 +2306,9 @@ export class HealthStatsService {
     const rangeEnd = new Date(Date.UTC(year + 1, 0, 1) - cnOffsetMs);
     const startIso = rangeStart.toISOString();
     const endIso = rangeEnd.toISOString();
+    const yearSleepRange = this.getSleepRange(rangeStart, rangeEnd);
+    const sleepStartIso = yearSleepRange.start.toISOString();
+    const sleepEndIso = yearSleepRange.end.toISOString();
 
     const monthKeyToIdx = new Map<string, number>();
     for (let i = 0; i < monthInfos.length; i += 1) {
@@ -2303,16 +2348,22 @@ export class HealthStatsService {
       this.db.execute(sql`
         SELECT
           to_char(
-            date_trunc('month', ${healthSleep.wakeTime} AT TIME ZONE 'Asia/Shanghai'),
+            date_trunc(
+              'month',
+              (${healthSleep.sleepTime} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours'
+            ),
             'YYYY-MM'
           ) AS month_key,
           SUM(${healthSleep.durationMinutes})::int AS total_minutes,
-          COUNT(DISTINCT date_trunc('day', ${healthSleep.wakeTime} AT TIME ZONE 'Asia/Shanghai'))::int AS record_days
+          COUNT(DISTINCT date_trunc(
+            'day',
+            (${healthSleep.sleepTime} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours'
+          ))::int AS record_days
         FROM ${healthSleep}
         WHERE ${and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, sql`${startIso}::timestamptz`),
-          lt(healthSleep.wakeTime, sql`${endIso}::timestamptz`),
+          gte(healthSleep.sleepTime, sql`${sleepStartIso}::timestamptz`),
+          lt(healthSleep.sleepTime, sql`${sleepEndIso}::timestamptz`),
         )}
         GROUP BY month_key
         ORDER BY month_key
@@ -2497,8 +2548,8 @@ export class HealthStatsService {
       this.db.select({ count: sql<number>`COUNT(*)`.as('count') }).from(healthSleep)
         .where(and(
           this.baseFilter(healthSleep, userId),
-          gte(healthSleep.wakeTime, rangeStart),
-          lt(healthSleep.wakeTime, rangeEnd),
+          gte(healthSleep.sleepTime, yearSleepRange.start),
+          lt(healthSleep.sleepTime, yearSleepRange.end),
         )),
       this.db.select({ count: sql<number>`COUNT(*)`.as('count') }).from(healthWater)
         .where(and(
@@ -2522,12 +2573,15 @@ export class HealthStatsService {
       this.db.execute(sql`
         SELECT COUNT(DISTINCT d)::int AS record_days
         FROM (
-          SELECT date_trunc('day', ${healthSleep.wakeTime} AT TIME ZONE 'Asia/Shanghai') AS d
+          SELECT date_trunc(
+            'day',
+            (${healthSleep.sleepTime} AT TIME ZONE 'Asia/Shanghai') - INTERVAL '5 hours'
+          ) AS d
           FROM ${healthSleep}
           WHERE ${and(
             this.baseFilter(healthSleep, userId),
-            gte(healthSleep.wakeTime, sql`${startIso}::timestamptz`),
-            lt(healthSleep.wakeTime, sql`${endIso}::timestamptz`),
+            gte(healthSleep.sleepTime, sql`${sleepStartIso}::timestamptz`),
+            lt(healthSleep.sleepTime, sql`${sleepEndIso}::timestamptz`),
           )}
           UNION
           SELECT date_trunc('day', ${healthMood.recordTime} AT TIME ZONE 'Asia/Shanghai') AS d

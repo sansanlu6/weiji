@@ -628,7 +628,13 @@ function showCardTime(type: RecordType): boolean {
 function groupRecordsByDate(type: RecordType, records: AnyRecord[]): { date: string; label: string; items: AnyRecord[] }[] {
   const map = new Map<string, AnyRecord[]>();
   for (const r of records) {
-    const d = dayjs(getRecordTime(type, r)).format('YYYY-MM-DD');
+    // 20:00–次日 04:59 属于前一晚；05:00–19:59 属于当天白天。
+    const recordTime = getRecordTime(type, r);
+    const d = type === 'sleep'
+      ? new Date(new Date(recordTime).getTime() + 3 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10)
+      : dayjs(recordTime).format('YYYY-MM-DD');
     if (!map.has(d)) map.set(d, []);
     map.get(d)!.push(r);
   }
