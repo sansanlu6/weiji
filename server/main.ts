@@ -29,9 +29,6 @@ async function bootstrap() {
     console.log('当前工作目录:', process.cwd());
     console.log('静态资源目录:', assetsDir);
     console.log('HTML 模板目录:', viewsDir);
-    #const clientDir = resolve(process.cwd(), 'dist/client');
-    #console.log('🔍 [Debug 根目录检测] 当前工作目录 process.cwd():', process.cwd());
-    #console.log('🔍 [Debug 静态资源目录] 预设 clientDir:', clientDir);
 
     // 💥 1. 严格的静态资源拦截器（精准打印 + 拒绝 HTML 伪装）
     app.use((req: any, res: any, next: any) => {
