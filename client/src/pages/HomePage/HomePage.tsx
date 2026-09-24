@@ -171,8 +171,6 @@ const HomePage: React.FC = () => {
           --motion-card: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
-
         #home-page-root {
           position: relative;
           z-index: 1;
