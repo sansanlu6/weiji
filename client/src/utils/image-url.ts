@@ -1,5 +1,7 @@
 const SUPABASE_PUBLIC_OBJECT_MARKER =
   '/storage/v1/object/public/weiji-images/';
+const STORAGE_OBJECT_PATH_PATTERN =
+  /^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.(?:jpe?g|png|webp|gif)$/i;
 
 /**
  * 手机网络直连 Supabase CDN 可能很慢。旧记录仍保存 Supabase 公网地址，
@@ -7,6 +9,12 @@ const SUPABASE_PUBLIC_OBJECT_MARKER =
  */
 export function resolveImageUrl(src: string): string {
   if (!src || src.startsWith('/api/upload/image/')) return src;
+
+  // 兼容早期迁移到 Supabase 时只在数据库保存了对象文件名
+  // （例如 1876813578438985.jpg）的记录。这类地址也应走本站图片代理。
+  if (STORAGE_OBJECT_PATH_PATTERN.test(src)) {
+    return `/api/upload/image/${src}`;
+  }
 
   try {
     const url = new URL(src);
