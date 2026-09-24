@@ -70,12 +70,19 @@ async function bootstrap() {
         });
       }
 
+      // API 请求必须交给 Nest 控制器处理。图片代理地址以 .jpg/.png
+      // 结尾，如果继续执行下面的静态文件判断，会被误拦截成 404。
+      const requestPath = url.split('?')[0];
+      if (requestPath.startsWith('/api/')) {
+        return next();
+      }
+
       // 判定是否为静态资源请求
-      const isStaticAsset = /\.(js|css|svg|png|jpg|ico|woff2?)$/i.test(url.split('?')[0]);
+      const isStaticAsset = /\.(js|css|svg|png|jpg|ico|woff2?)$/i.test(requestPath);
 
       if (isStaticAsset) {
         // 提取纯净的文件名与路径
-        const cleanPath = url.split('?')[0];
+        const cleanPath = requestPath;
         // 尝试在多个可能的目录中寻找该文件
         const possiblePaths = [
           join(assetsDir, cleanPath),
