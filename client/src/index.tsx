@@ -11,7 +11,7 @@ import './index.css';
 import { createPortal } from 'react-dom';
 import { Toaster } from '@client/src/components/ui/sonner';
 
-const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
+const CLIENT_BASE_PATH = '/';
 
 const MainApp = () => {
   return (
