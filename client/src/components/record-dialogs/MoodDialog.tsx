@@ -10,10 +10,8 @@ import {
 } from '@client/src/components/ui/dialog';
 import { Button } from '@client/src/components/ui/button';
 import { Textarea } from '@client/src/components/ui/textarea';
-import { getDataloom } from '@lark-apaas/client-toolkit/dataloom';
-import { getDefaultBucketId } from '@lark-apaas/client-toolkit/tools/storage';
 import { logger } from '@lark-apaas/client-toolkit/logger';
-import { moodApi } from '@client/src/api';
+import { moodApi, uploadImage } from '@client/src/api';
 import { MOOD_TAGS, MOOD_EMOJI } from '@client/src/utils/record-constants';
 import type { MoodRecord } from '@shared/api.interface';
 import { Image } from '@client/src/components/ui/image';
@@ -73,20 +71,9 @@ const MoodDialog: React.FC<MoodDialogProps> = ({ open, onClose, record, onSucces
       return;
     }
 
-    const dataloom = await getDataloom();
-    const uploadFile = file instanceof File
-      ? file
-      : new File([file], fileName, { type: 'image/jpeg' });
-    const { data, error } = await dataloom
-      .storage
-      .from(getDefaultBucketId())
-      .uploadFile(uploadFile);
-    if (error || !data) {
-      const err = error as { message?: string; error_msg?: string } | null;
-      throw new Error(err?.message || err?.error_msg || '上传失败');
-    }
-    setImageUrl(data.download_url);
-    registerUploadedImage(file, fileName, data.download_url);
+    const downloadUrl = await uploadImage(file, fileName);
+    setImageUrl(downloadUrl);
+    registerUploadedImage(file, fileName, downloadUrl);
     toast.success('图片上传成功');
   };
 

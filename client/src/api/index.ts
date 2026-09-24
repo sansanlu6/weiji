@@ -15,3 +15,4 @@ export * as remindersApi from './reminders';
 export * as dataApi from './data';
 export * as achievementsApi from './achievements';
 export * as profileApi from './profile';
+export { uploadImage } from './upload';

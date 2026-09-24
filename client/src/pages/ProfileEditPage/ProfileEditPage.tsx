@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Camera } from 'lucide-react';
-import { getDataloom } from '@lark-apaas/client-toolkit/dataloom';
-import { getDefaultBucketId } from '@lark-apaas/client-toolkit/tools/storage';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import { toast } from 'sonner';
-import { profileApi } from '@client/src/api';
+import { profileApi, uploadImage } from '@client/src/api';
 import type { UserProfileInfo } from '@shared/api.interface';
 import { Image } from '@client/src/components/ui/image';
 import ImageEditor from '@client/src/components/ui/image-editor';
@@ -113,18 +111,9 @@ const ProfileEditPage: React.FC = () => {
         return;
       }
 
-      const dataloom = await getDataloom();
-      const uploadFile = new File([blob], fileName, { type: blob.type });
-      const { data, error } = await dataloom
-        .storage
-        .from(getDefaultBucketId())
-        .uploadFile(uploadFile);
-      if (error || !data) {
-        const errAny = error as any;
-        throw new Error(errAny?.message || errAny?.error_msg || '上传失败');
-      }
-      setAvatarUrl(data.download_url);
-      registerUploadedImage(blob, fileName, data.download_url);
+      const downloadUrl = await uploadImage(blob, fileName);
+      setAvatarUrl(downloadUrl);
+      registerUploadedImage(blob, fileName, downloadUrl);
       toast.success('头像上传成功');
     } catch (err) {
       logger.error('[profile-edit] avatar upload failed', err);

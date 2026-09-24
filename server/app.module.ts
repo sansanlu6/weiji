@@ -10,6 +10,7 @@ import { HealthGoalsModule } from './modules/health-goals/health-goals.module';
 import { HealthRemindersModule } from './modules/health-reminders/health-reminders.module';
 import { HealthDataModule } from './modules/health-data/health-data.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UploadModule } from './modules/upload/upload.module';
 import { DataPaasModule } from '@lark-apaas/nestjs-datapaas';
 
 @Module({
@@ -30,6 +31,7 @@ import { DataPaasModule } from '@lark-apaas/nestjs-datapaas';
     HealthRemindersModule,
     HealthDataModule,
     AuthModule,
+    UploadModule,
 
     ViewModule,
   ],

@@ -1,6 +1,5 @@
 'use client';
-import { getDataloom } from '@lark-apaas/client-toolkit/dataloom';
-import { getDefaultBucketId } from '@lark-apaas/client-toolkit/tools/storage';
+import { uploadImage } from '@client/src/api/upload';
 
 export interface UploadFileData {
   id: string;
@@ -10,19 +9,12 @@ export interface UploadFileData {
 }
 
 export async function uploadFile(file: File): Promise<UploadFileData> {
-  const dataloom = await getDataloom();
-  const bucket = dataloom.storage.from(getDefaultBucketId());
-
-  const result = await bucket.uploadFile(file);
-
-  if (result.error) {
-    throw result.error;
-  }
+  const url = await uploadImage(file, file.name);
 
   return {
-    id: result.data.id,
-    filePath: result.data.file_path,
-    bucketId: result.data.bucket_id,
-    url: result.data.download_url,
+    id: url,
+    filePath: url,
+    bucketId: 'weiji-images',
+    url,
   };
 }
