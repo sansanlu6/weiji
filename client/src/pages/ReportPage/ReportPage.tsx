@@ -59,6 +59,174 @@ interface ScoreBreakdown {
   overall: number;
 }
 
+const PDF_PAGE_MARGIN_MM = 10;
+const PDF_RENDER_WIDTH_PX = 794;
+const PDF_COLOR_PROPERTIES = [
+  'color',
+  'background-color',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color',
+  'outline-color',
+  'text-decoration-color',
+  'fill',
+  'stroke',
+] as const;
+const UNSUPPORTED_PDF_COLOR_PATTERN =
+  /(?:oklab|oklch|color-mix|\blab\(|\blch\()/i;
+
+function waitForReportImages(element: HTMLElement): Promise<void> {
+  const pendingImages = Array.from(element.querySelectorAll('img')).filter(
+    (image) => !image.complete,
+  );
+
+  return Promise.all(
+    pendingImages.map(
+      (image) =>
+        new Promise<void>((resolve) => {
+          const timeout = window.setTimeout(resolve, 15000);
+          const finish = () => {
+            window.clearTimeout(timeout);
+            resolve();
+          };
+          image.addEventListener('load', finish, { once: true });
+          image.addEventListener('error', finish, { once: true });
+        }),
+    ),
+  ).then(() => undefined);
+}
+
+/**
+ * html2canvas 目前无法解析 Tailwind 生成的 oklab/oklch/color-mix 颜色。
+ * 在它创建的副本中将这些颜色转换为普通 rgba，并移除截图不稳定的滤镜。
+ */
+function preparePdfClone(
+  clonedDocument: Document,
+  clonedReport: HTMLElement,
+): void {
+  clonedReport.querySelectorAll('[data-pdf-exclude]').forEach((element) => {
+    element.remove();
+  });
+
+  clonedReport.style.width = `${PDF_RENDER_WIDTH_PX}px`;
+  clonedReport.style.maxWidth = 'none';
+  clonedReport.style.height = 'auto';
+  clonedReport.style.backgroundColor = '#ffffff';
+  clonedReport.style.backdropFilter = 'none';
+  clonedReport.style.setProperty('-webkit-backdrop-filter', 'none');
+  clonedReport.style.boxShadow = 'none';
+
+  const colorCanvas = clonedDocument.createElement('canvas');
+  colorCanvas.width = 1;
+  colorCanvas.height = 1;
+  const colorContext = colorCanvas.getContext('2d', {
+    willReadFrequently: true,
+  });
+  const view = clonedDocument.defaultView;
+
+  if (!colorContext || !view) return;
+
+  const toRgba = (value: string): string => {
+    colorContext.clearRect(0, 0, 1, 1);
+    colorContext.fillStyle = 'rgba(0, 0, 0, 0)';
+    colorContext.fillStyle = value;
+    colorContext.fillRect(0, 0, 1, 1);
+    const [red, green, blue, alpha] = colorContext.getImageData(0, 0, 1, 1).data;
+    return `rgba(${red}, ${green}, ${blue}, ${(alpha / 255).toFixed(3)})`;
+  };
+
+  const elements = [
+    clonedReport,
+    ...Array.from(clonedReport.querySelectorAll<HTMLElement>('*')),
+  ];
+  elements.forEach((element) => {
+    const computedStyle = view.getComputedStyle(element);
+
+    PDF_COLOR_PROPERTIES.forEach((property) => {
+      const value = computedStyle.getPropertyValue(property);
+      if (value && value !== 'none') {
+        element.style.setProperty(property, toRgba(value), 'important');
+      }
+    });
+
+    if (UNSUPPORTED_PDF_COLOR_PATTERN.test(computedStyle.backgroundImage)) {
+      element.style.setProperty('background-image', 'none', 'important');
+    }
+    element.style.setProperty('box-shadow', 'none', 'important');
+    element.style.setProperty('text-shadow', 'none', 'important');
+    element.style.setProperty('filter', 'none', 'important');
+    element.style.setProperty('backdrop-filter', 'none', 'important');
+    element.style.setProperty('-webkit-backdrop-filter', 'none', 'important');
+    element.style.setProperty('animation', 'none', 'important');
+    element.style.setProperty('transition', 'none', 'important');
+  });
+}
+
+function addCanvasPagesToPdf(
+  pdf: jsPDF,
+  canvas: HTMLCanvasElement,
+  sectionBreaks: number[],
+): void {
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+  const contentWidth = pdfWidth - PDF_PAGE_MARGIN_MM * 2;
+  const contentHeight = pdfHeight - PDF_PAGE_MARGIN_MM * 2;
+  const millimetersPerPixel = contentWidth / canvas.width;
+  const pageHeightInPixels = Math.max(
+    1,
+    Math.floor(contentHeight / millimetersPerPixel),
+  );
+
+  let sourceY = 0;
+  let pageIndex = 0;
+  while (sourceY < canvas.height) {
+    const maximumEnd = Math.min(sourceY + pageHeightInPixels, canvas.height);
+    const minimumUsefulEnd = sourceY + pageHeightInPixels * 0.55;
+    const preferredEnd = sectionBreaks
+      .filter((position) => position >= minimumUsefulEnd && position <= maximumEnd)
+      .at(-1);
+    const sliceEnd = preferredEnd ?? maximumEnd;
+    const sliceHeight = sliceEnd - sourceY;
+    const pageCanvas = document.createElement('canvas');
+    pageCanvas.width = canvas.width;
+    pageCanvas.height = sliceHeight;
+    const pageContext = pageCanvas.getContext('2d');
+    if (!pageContext) {
+      throw new Error('无法创建 PDF 分页画布');
+    }
+
+    pageContext.fillStyle = '#ffffff';
+    pageContext.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+    pageContext.drawImage(
+      canvas,
+      0,
+      sourceY,
+      canvas.width,
+      sliceHeight,
+      0,
+      0,
+      canvas.width,
+      sliceHeight,
+    );
+
+    if (pageIndex > 0) pdf.addPage();
+    pdf.addImage(
+      pageCanvas.toDataURL('image/jpeg', 0.9),
+      'JPEG',
+      PDF_PAGE_MARGIN_MM,
+      PDF_PAGE_MARGIN_MM,
+      contentWidth,
+      sliceHeight * millimetersPerPixel,
+      undefined,
+      'FAST',
+    );
+
+    sourceY += sliceHeight;
+    pageIndex += 1;
+  }
+}
+
 const REPORT_TYPES: { value: ReportType; label: string; days: number }[] = [
   { value: 'week', label: '周报', days: 7 },
   { value: 'month', label: '月报', days: 30 },
@@ -546,34 +714,85 @@ const ReportPage: React.FC = () => {
   const handleExportPDF = async (): Promise<void> => {
     if (!reportRef.current || !reportData) return;
 
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(
+      navigator.userAgent,
+    );
+    const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+    const previewWindow = isMobile ? window.open('', '_blank') : null;
+
+    if (previewWindow) {
+      previewWindow.document.title = '正在生成健康报告';
+      previewWindow.document.body.innerHTML =
+        '<p style="font-family:sans-serif;padding:24px;color:#2a483a">正在生成健康报告，请稍候…</p>';
+    }
+
     try {
       setExporting(true);
       logger.info('[report] exporting PDF');
 
       const element = reportRef.current;
+      await document.fonts?.ready;
+      await waitForReportImages(element);
+
+      const renderScale = isMobile ? 1.5 : 2;
+      let sectionBreaks: number[] = [];
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: renderScale,
         useCORS: true,
         backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 15000,
+        windowWidth: 1200,
+        onclone: (clonedDocument, clonedElement) => {
+          preparePdfClone(clonedDocument, clonedElement);
+          const reportTop = clonedElement.getBoundingClientRect().top;
+          sectionBreaks = Array.from(
+            clonedElement.querySelectorAll<HTMLElement>('[data-pdf-section]'),
+          )
+            .map(
+              (section) =>
+                Math.round(
+                  (section.getBoundingClientRect().top - reportTop) *
+                    renderScale,
+                ),
+            )
+            .filter((position) => position > 0);
+        },
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-
+      addCanvasPagesToPdf(pdf, canvas, sectionBreaks);
       const fileName = `健康报告_${reportData.startDate}_${reportData.endDate}.pdf`;
-      pdf.save(fileName);
-
-      toast.success('PDF 导出成功');
+      pdf.setProperties({
+        title: fileName.replace(/\.pdf$/i, ''),
+        subject: '微迹健康报告',
+        author: '微迹',
+        creator: '微迹',
+      });
+      if (isMobile) {
+        const pdfUrl = URL.createObjectURL(pdf.output('blob'));
+        if (previewWindow && !previewWindow.closed) {
+          previewWindow.location.replace(pdfUrl);
+        } else {
+          const previewLink = document.createElement('a');
+          previewLink.href = pdfUrl;
+          previewLink.target = '_blank';
+          previewLink.rel = 'noopener noreferrer';
+          previewLink.download = fileName;
+          previewLink.click();
+        }
+        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 5 * 60 * 1000);
+        toast.success(
+          isWeChat
+            ? 'PDF 已生成，请在预览页右上角选择保存或在浏览器中打开'
+            : 'PDF 已生成并打开预览',
+        );
+      } else {
+        pdf.save(fileName);
+        toast.success('PDF 导出成功');
+      }
     } catch (err) {
+      if (previewWindow && !previewWindow.closed) previewWindow.close();
       logger.error('[report] export PDF failed', { error: err });
       toast.error('导出失败，请稍后重试');
     } finally {
@@ -859,9 +1078,9 @@ const ReportPage: React.FC = () => {
       {reportData && scores && analysis && (
         <>
           {/* 报告内容（用于 PDF 导出截取） */}
-           <div ref={reportRef} className="rounded-3xl shadow-sm p-6 md:p-8 space-y-8" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.5)' }}>
+           <div ref={reportRef} data-pdf-report className="rounded-3xl shadow-sm p-6 md:p-8 space-y-8" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.5)' }}>
              {/* 报告标题 + 右上角导出按钮 */}
-              <div className="flex items-start justify-between border-b border-border pb-6">
+              <div data-pdf-section className="flex items-start justify-between border-b border-border pb-6">
                 <div>
                   <h2 className="text-2xl font-bold font-sans-hei">
                     {currentPeriod.label.includes('本') ? '' : periodLabel.replace('报', '')}健康报告
@@ -870,7 +1089,7 @@ const ReportPage: React.FC = () => {
                     {reportData.startDate} 至 {reportData.endDate}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-end gap-2" data-pdf-exclude>
                   <button
                     onClick={handleExportPDF}
                     disabled={exporting}
@@ -906,7 +1125,7 @@ const ReportPage: React.FC = () => {
               </div>
 
              {/* 健康评分 + 核心指标 */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+             <div data-pdf-section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
                {/* 圆形进度条 */}
                <div className="flex flex-col items-center">
                  <ScoreRing score={scores.overall} />
@@ -949,7 +1168,7 @@ const ReportPage: React.FC = () => {
             </div>
 
             {/* 各维度分析 */}
-            <div className="space-y-4">
+            <div data-pdf-section className="space-y-4">
               <h3 className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
                 <Heart size={20} className="text-primary" />
                 维度分析
@@ -1007,7 +1226,7 @@ const ReportPage: React.FC = () => {
             </div>
 
             {/* 健康建议 */}
-            <div className="space-y-4">
+            <div data-pdf-section className="space-y-4">
               <h3 className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
                 <Heart size={20} className="text-primary" />
                 健康建议
@@ -1025,7 +1244,7 @@ const ReportPage: React.FC = () => {
             </div>
 
             {/* 页脚 */}
-            <div className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
+            <div data-pdf-section className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
               由 微迹 自动生成 · {dayjs().format('YYYY-MM-DD')}
             </div>
           </div>
