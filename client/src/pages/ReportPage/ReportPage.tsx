@@ -897,21 +897,22 @@ const SubScoreChip: React.FC<{
   label: string;
   score: number;
   color: string;
-}> = ({ icon: Icon, label, score, color }) => {
+  className?: string;
+}> = ({ icon: Icon, label, score, color, className = '' }) => {
   const { bg, border } = getScoreLevelBg(score);
   return (
     <div
       data-pdf-score-chip
-      className="flex items-center gap-2 px-4 py-2 rounded-full shadow-sm"
+      className={`flex min-w-0 w-full items-center justify-center gap-1.5 rounded-full px-2 py-2 shadow-sm sm:gap-2 sm:px-4 ${className}`}
       style={{
         backgroundColor: bg,
         border: `1px solid ${border}`,
       }}
     >
       <Icon size={18} style={{ color }} />
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="whitespace-nowrap text-xs text-muted-foreground sm:text-sm">{label}</span>
       <span
-        className="text-base font-semibold tabular-nums"
+        className="whitespace-nowrap text-sm font-semibold tabular-nums sm:text-base"
         style={{ color }}
       >
         {score}
@@ -1138,6 +1139,13 @@ const ReportPage: React.FC = () => {
       setExportProgress('正在加载原生 PDF 排版引擎…');
       await waitForNextPaint();
       logger.info('[report] exporting PDF');
+
+      // React-PDF 的字体与图片解析依赖 Node Buffer；Vite 浏览器环境需显式注入。
+      const { Buffer: BrowserBuffer } = await import('buffer');
+      const browserGlobal = globalThis as typeof globalThis & {
+        Buffer?: typeof BrowserBuffer;
+      };
+      browserGlobal.Buffer ??= BrowserBuffer;
 
       const [{ pdf }, { createHealthReportPdfDocument }] = await Promise.all([
         import('@react-pdf/renderer'),
@@ -1535,26 +1543,26 @@ const ReportPage: React.FC = () => {
               </div>
 
              {/* 健康评分 + 核心指标 */}
-             <div data-pdf-section="score" className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+             <div data-pdf-section="score" className="flex flex-col items-center gap-8">
                {/* 圆形进度条 */}
-               <div className="flex flex-col items-center">
+               <div className="flex w-full flex-col items-center">
                  <ScoreRing score={scores.overall} />
-                 <div data-pdf-score-list className="flex flex-wrap justify-center gap-2 mt-5">
+                 <div data-pdf-score-list className="mt-5 grid w-full max-w-[440px] grid-cols-3 gap-2">
                     <SubScoreChip icon={MoonStar} label="睡眠" score={scores.sleep} color="#8b7fb0" />
                     <SubScoreChip icon={Droplet} label="喝水" score={scores.water} color="#7a9fb5" />
                     <SubScoreChip icon={Dumbbell} label="运动" score={scores.exercise} color="#7da895" />
-                    <SubScoreChip icon={Smile} label="情绪" score={scores.mood} color="#c9a66b" />
+                    <SubScoreChip className="col-start-2" icon={Smile} label="情绪" score={scores.mood} color="#c9a66b" />
                  </div>
                </div>
 
               {/* 核心指标 */}
-              <div data-pdf-metric-grid className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div data-pdf-metric-grid className="grid w-full grid-cols-3 gap-3">
                 {metrics?.map((m, idx) => {
                   const Icon = m.icon;
                   return (
                       <div
                         key={idx}
-                        className="rounded-xl p-4 flex flex-col items-center text-center transition-all shadow-[0_6px_16px_rgba(0_0_0_0.18)]"
+                        className="flex min-h-[138px] flex-col items-center justify-center rounded-xl p-2 text-center transition-all shadow-[0_6px_16px_rgba(0_0_0_0.12)] sm:p-4"
                         style={{
                           backgroundColor: 'rgba(255, 255, 255, 0.5)',
                           borderRadius: '16px',
