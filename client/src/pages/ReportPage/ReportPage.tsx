@@ -1127,7 +1127,7 @@ const ReportPage: React.FC = () => {
   };
 
   const handleExportPDF = async (): Promise<void> => {
-    if (!reportRef.current || !reportData) return;
+    if (!reportData || !scores || !analysis || !metrics) return;
 
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(
       navigator.userAgent,
@@ -1135,71 +1135,67 @@ const ReportPage: React.FC = () => {
 
     try {
       setExporting(true);
-      setExportProgress('正在准备字体和背景…');
+      setExportProgress('正在加载原生 PDF 排版引擎…');
       await waitForNextPaint();
       logger.info('[report] exporting PDF');
 
-      const element = reportRef.current;
-      await document.fonts?.ready;
-      await waitForReportImages(element);
-      const pdfBackground = await loadPdfBackground(reportPdfBackground);
+      const [{ pdf }, { createHealthReportPdfDocument }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./HealthReportPdfDocument'),
+      ]);
 
-      setExportProgress('正在绘制报告页面…');
+      setExportProgress('正在排版文字、图表和分页…');
       await waitForNextPaint();
-      // 1.3 倍足以清晰展示在手机上，同时显著降低内存和编码耗时。
-      const renderScale = isMobile ? 1.3 : 2;
-      let sectionBreaks: number[] = [];
-      const canvas = await html2canvas(element, {
-        scale: renderScale,
-        useCORS: true,
-        backgroundColor: null,
-        logging: false,
-        imageTimeout: 15000,
-        windowWidth: 1200,
-        onclone: (clonedDocument, clonedElement) => {
-          preparePdfClone(clonedDocument, clonedElement);
-          const reportTop = clonedElement.getBoundingClientRect().top;
-          sectionBreaks = Array.from(
-            clonedElement.querySelectorAll<HTMLElement>('[data-pdf-section]'),
-          )
-            .map(
-              (section) =>
-                Math.round(
-                  (section.getBoundingClientRect().top - reportTop) *
-                    renderScale,
-                ),
-            )
-            .filter((position) => position > 0);
-        },
+      const metricIcons = [
+        'calendar',
+        'sleep',
+        'water',
+        'exercise',
+        'mood',
+        'pain',
+      ] as const;
+      const metricColors = [
+        '#4f8068',
+        '#7b68b2',
+        '#5791b5',
+        '#59977a',
+        '#c48c2f',
+        '#bd7892',
+      ];
+      const pdfDocument = createHealthReportPdfDocument({
+        startDate: reportData.startDate,
+        endDate: reportData.endDate,
+        generatedAt: dayjs().format('YYYY-MM-DD'),
+        scores,
+        metrics: metrics.map((metric, index) => ({
+          label: metric.label,
+          value: metric.value,
+          unit: metric.unit,
+          icon: metricIcons[index],
+          color: metricColors[index],
+        })),
+        analysis,
+        advice,
       });
-
-      setExportProgress('正在生成 PDF 预览…');
-      await waitForNextPaint();
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const previewPages = addCanvasPagesToPdf(
-        pdf,
-        canvas,
-        sectionBreaks,
-        pdfBackground,
-        isMobile ? 0.82 : 0.88,
-      );
+      const pdfBlob = await pdf(pdfDocument).toBlob();
       const fileName = `健康报告_${reportData.startDate}_${reportData.endDate}.pdf`;
-      pdf.setProperties({
-        title: fileName.replace(/\.pdf$/i, ''),
-        subject: '微迹健康报告',
-        author: '微迹',
-        creator: '微迹',
-      });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+
       if (isMobile) {
-        const pdfUrl = URL.createObjectURL(pdf.output('blob'));
         if (pdfPreviewUrlRef.current) {
           URL.revokeObjectURL(pdfPreviewUrlRef.current);
         }
         pdfPreviewUrlRef.current = pdfUrl;
-        setPdfPreview({ fileName, pdfUrl, pages: previewPages });
+        setPdfPreview({ fileName, pdfUrl, pages: [] });
         toast.success('PDF 已生成，可预览后选择保存');
       } else {
-        pdf.save(fileName);
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 30_000);
         toast.success('PDF 导出成功');
       }
     } catch (err) {
@@ -1728,7 +1724,9 @@ const ReportPage: React.FC = () => {
                    PDF 预览
                  </p>
                  <p className="text-xs" style={{ color: '#72857a' }}>
-                   共 {pdfPreview.pages.length} 页
+                   {pdfPreview.pages.length > 0
+                     ? `共 ${pdfPreview.pages.length} 页`
+                     : '原生 PDF 文档'}
                  </p>
                </div>
                <button
@@ -1747,21 +1745,29 @@ const ReportPage: React.FC = () => {
                style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
              >
                <div className="mx-auto flex max-w-3xl flex-col gap-4">
-                 {pdfPreview.pages.map((page, index) => (
-                   <figure key={index} className="m-0">
-                     <img
-                       src={page}
-                       alt={`健康报告第 ${index + 1} 页`}
-                       className="block h-auto w-full bg-white shadow-lg"
-                     />
-                     <figcaption
-                       className="pt-2 text-center text-xs"
-                       style={{ color: '#6f7f76' }}
-                     >
-                       第 {index + 1} 页
-                     </figcaption>
-                   </figure>
-                 ))}
+                 {pdfPreview.pages.length > 0 ? (
+                   pdfPreview.pages.map((page, index) => (
+                     <figure key={index} className="m-0">
+                       <img
+                         src={page}
+                         alt={`健康报告第 ${index + 1} 页`}
+                         className="block h-auto w-full bg-white shadow-lg"
+                       />
+                       <figcaption
+                         className="pt-2 text-center text-xs"
+                         style={{ color: '#6f7f76' }}
+                       >
+                         第 {index + 1} 页
+                       </figcaption>
+                     </figure>
+                   ))
+                 ) : (
+                   <iframe
+                     src={`${pdfPreview.pdfUrl}#toolbar=0&navpanes=0&view=FitH`}
+                     title="健康报告 PDF 预览"
+                     className="h-[calc(100dvh-132px)] min-h-[520px] w-full border-0 bg-white shadow-lg"
+                   />
+                 )}
                  <p className="px-4 text-center text-xs leading-relaxed" style={{ color: '#6f7f76' }}>
                    微信内如无法直接保存 PDF，可点击右上角菜单选择“在浏览器打开”。
                  </p>
