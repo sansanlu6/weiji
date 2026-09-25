@@ -23,6 +23,7 @@ import ToiletIcon from '@client/src/components/icons/ToiletIcon';
 import { Image } from '@client/src/components/ui/image';
 import Twemoji from '@client/src/components/ui/twemoji';
 import PageBackground from '@client/src/components/PageBackground';
+import { invalidateHomePageCache } from '@client/src/utils/home-page-cache';
 
 import {
   sleepApi, moodApi, painApi, dietApi, exerciseApi, waterApi, medicationApi, poopApi,
@@ -225,6 +226,7 @@ const MoodRecordList: React.FC = () => {
   const confirmDelete = async (): Promise<void> => {
     try {
       await moodApi.deleteMood(deleteConfirm.id);
+      invalidateHomePageCache();
       toast.success('已删除');
       setDeleteConfirm({ open: false, id: '' });
       void fetchList(page);
@@ -234,6 +236,7 @@ const MoodRecordList: React.FC = () => {
   };
 
   const handleSuccess = (): void => {
+    invalidateHomePageCache();
     setDialogOpen(false);
     setEditRecord(null);
     if (moodFromHome.current) {
@@ -712,6 +715,7 @@ const GenericRecordList: React.FC<{ type: RecordType }> = ({ type }) => {
   const confirmDelete = async (): Promise<void> => {
     try {
       await getDeleteFn(type)(deleteConfirm.id);
+      invalidateHomePageCache();
       toast.success('已删除');
       setDeleteConfirm({ open: false, id: '' });
       void fetchList(page);
@@ -721,6 +725,7 @@ const GenericRecordList: React.FC<{ type: RecordType }> = ({ type }) => {
   };
 
   const handleSuccess = (): void => {
+    invalidateHomePageCache();
     setDialogOpen(false);
     setEditRecord(null);
     if (fromHome.current) {

@@ -36,6 +36,7 @@ import {
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
 import ExportDialog from '@/components/ExportDialog';
+import { invalidateHomePageCache } from '@client/src/utils/home-page-cache';
 import {
    RecordItem,
    RecycleItem,
@@ -254,6 +255,7 @@ const DataPage: React.FC = () => {
     const ids = Array.from(selectedIds);
     try {
       await batchDelete(appliedType || 'all', ids);
+      invalidateHomePageCache();
       toast.success(`已删除 ${ids.length} 条记录`);
       setSelectedIds(new Set());
       setBatchMode(false);
@@ -267,6 +269,7 @@ const DataPage: React.FC = () => {
   const handleSoftDelete = async (record: UnifiedRecord): Promise<void> => {
     try {
       await batchDelete(record.type, [record.id]);
+      invalidateHomePageCache();
       toast.success('已移入回收站');
       fetchRecords();
     } catch (err) {
@@ -278,6 +281,7 @@ const DataPage: React.FC = () => {
   const handleRestore = async (record: RecycleRecord): Promise<void> => {
     try {
       await restoreRecord(record.type, record.id);
+      invalidateHomePageCache();
       toast.success('已恢复');
       fetchRecycleBin();
     } catch (err) {
@@ -297,6 +301,7 @@ const DataPage: React.FC = () => {
     }
     try {
       await permanentDelete(deleteConfirm.type, deleteConfirm.id);
+      invalidateHomePageCache();
       toast.success('已永久删除');
       setDeleteConfirm({ open: false, type: '', id: '' });
       fetchRecycleBin();
@@ -349,6 +354,7 @@ const DataPage: React.FC = () => {
     }
     try {
       await batchRestore(type, ids);
+      invalidateHomePageCache();
       toast.success(`已恢复 ${ids.length} 条记录`);
       setRecycleSelectedIds(new Set());
       setRecycleBatchMode(false);
@@ -375,6 +381,7 @@ const DataPage: React.FC = () => {
     if (!type || ids.length === 0) return;
     try {
       await batchPermanentDelete(type, ids);
+      invalidateHomePageCache();
       toast.success(`已永久删除 ${ids.length} 条记录`);
       setDeleteConfirm({ open: false, type: '', id: '' });
       setRecycleSelectedIds(new Set());

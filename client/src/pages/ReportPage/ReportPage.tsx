@@ -31,7 +31,7 @@ import {
 } from '@client/src/api/stats';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
-import reportPdfBackground from '@client/src/assets/health-report-pdf-bg-v1.png';
+import reportPdfBackground from '@client/src/assets/health-report-pdf-bg-v1.jpg';
 import type {
   StatsItem,
   MoodDistribution,
@@ -60,12 +60,25 @@ interface ScoreBreakdown {
   overall: number;
 }
 
+interface PdfPreviewState {
+  fileName: string;
+  pdfUrl: string;
+  pages: string[];
+}
+
 const PDF_PAGE_MARGIN_MM = 9;
 const PDF_RENDER_WIDTH_PX = 794;
 const PDF_SERIF_FONT =
   '"Noto Serif SC", "Source Han Serif CN", "思源宋体", "Songti SC", serif';
 const PDF_SANS_FONT =
   '"Source Han Sans SC", "Noto Sans SC", "思源黑体", "PingFang SC", "Microsoft YaHei", sans-serif';
+
+function waitForNextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => resolve());
+  });
+}
+
 const PDF_COLOR_PROPERTIES = [
   'color',
   'background-color',
@@ -126,7 +139,7 @@ function preparePdfClone(
   clonedReport.style.width = `${PDF_RENDER_WIDTH_PX}px`;
   clonedReport.style.maxWidth = 'none';
   clonedReport.style.height = 'auto';
-  clonedReport.style.padding = '42px 44px 38px';
+  clonedReport.style.padding = '36px 44px 28px';
   clonedReport.style.border = 'none';
   clonedReport.style.borderRadius = '0';
   clonedReport.style.backgroundColor = 'transparent';
@@ -135,6 +148,11 @@ function preparePdfClone(
   clonedReport.style.backdropFilter = 'none';
   clonedReport.style.setProperty('-webkit-backdrop-filter', 'none');
   clonedReport.style.boxShadow = 'none';
+
+  Array.from(clonedReport.children).forEach((child, index) => {
+    if (index === 0 || !(child instanceof HTMLElement)) return;
+    child.style.setProperty('margin-block-start', '22px', 'important');
+  });
 
   const pdfOnly = clonedReport.querySelector<HTMLElement>('[data-pdf-only]');
   if (pdfOnly) {
@@ -179,28 +197,56 @@ function preparePdfClone(
     '[data-pdf-section="score"]',
   );
   if (scoreSection) {
+    scoreSection.style.display = 'grid';
     scoreSection.style.gridTemplateColumns = '210px minmax(0, 1fr)';
-    scoreSection.style.gap = '26px';
-    scoreSection.style.padding = '24px';
-    scoreSection.style.border = '1px solid rgba(73, 113, 92, 0.12)';
-    scoreSection.style.borderRadius = '20px';
-    scoreSection.style.backgroundColor = 'rgba(255, 255, 252, 0.88)';
+    scoreSection.style.alignItems = 'center';
+    scoreSection.style.gap = '30px';
+    scoreSection.style.padding = '8px 10px 4px';
+    scoreSection.style.border = 'none';
+    scoreSection.style.borderRadius = '0';
+    scoreSection.style.backgroundColor = 'transparent';
   }
 
   clonedReport
     .querySelectorAll<HTMLElement>('[data-pdf-metric-grid]')
     .forEach((grid) => {
+      grid.style.gridColumn = '2 / 3';
+      grid.style.alignSelf = 'center';
       grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-      grid.style.gap = '12px';
+      grid.style.columnGap = '14px';
+      grid.style.rowGap = '22px';
+    });
+
+  const scoreRing = clonedReport.querySelector<HTMLElement>('[data-pdf-score-ring]');
+  if (scoreRing) {
+    scoreRing.style.width = '148px';
+    scoreRing.style.height = '148px';
+  }
+
+  const scoreList = clonedReport.querySelector<HTMLElement>('[data-pdf-score-list]');
+  if (scoreList) {
+    scoreList.style.flexDirection = 'column';
+    scoreList.style.flexWrap = 'nowrap';
+    scoreList.style.alignItems = 'center';
+    scoreList.style.gap = '6px';
+    scoreList.style.marginTop = '10px';
+  }
+
+  clonedReport
+    .querySelectorAll<HTMLElement>('[data-pdf-score-chip]')
+    .forEach((chip) => {
+      chip.style.minWidth = '126px';
+      chip.style.padding = '5px 12px';
+      chip.style.gap = '7px';
     });
 
   clonedReport
     .querySelectorAll<HTMLElement>('[data-pdf-section="analysis"], [data-pdf-section="advice"]')
     .forEach((section) => {
-      section.style.padding = '24px';
-      section.style.border = '1px solid rgba(73, 113, 92, 0.1)';
-      section.style.borderRadius = '20px';
-      section.style.backgroundColor = 'rgba(255, 255, 252, 0.86)';
+      section.style.padding = '0';
+      section.style.border = 'none';
+      section.style.borderRadius = '0';
+      section.style.backgroundColor = 'transparent';
     });
 
   clonedReport.querySelectorAll<HTMLElement>('[data-pdf-heading]').forEach((heading) => {
@@ -209,6 +255,8 @@ function preparePdfClone(
     heading.style.fontWeight = '600';
     heading.style.letterSpacing = '0.04em';
     heading.style.color = '#2b5745';
+    heading.style.paddingBottom = '8px';
+    heading.style.borderBottom = '1px solid rgba(67, 104, 85, 0.2)';
   });
 
   const analysisGrid = clonedReport.querySelector<HTMLElement>('[data-pdf-analysis-grid]');
@@ -216,6 +264,27 @@ function preparePdfClone(
     analysisGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
     analysisGrid.style.gap = '14px';
   }
+
+  clonedReport
+    .querySelectorAll<HTMLElement>('[data-pdf-advice-index]')
+    .forEach((index) => {
+      index.style.setProperty('display', 'flex', 'important');
+      index.style.setProperty('align-items', 'center', 'important');
+      index.style.setProperty('justify-content', 'center', 'important');
+      index.style.width = '24px';
+      index.style.height = '24px';
+      index.style.padding = '0';
+      index.style.lineHeight = '1';
+      index.style.textAlign = 'center';
+      const label = index.querySelector<HTMLElement>('span');
+      if (label) {
+        label.style.display = 'block';
+        label.style.width = '24px';
+        label.style.height = '24px';
+        label.style.lineHeight = '24px';
+        label.style.textAlign = 'center';
+      }
+    });
 
   const reportFooter = clonedReport.querySelector<HTMLElement>(
     '[data-pdf-section="footer"]',
@@ -278,7 +347,8 @@ function addCanvasPagesToPdf(
   canvas: HTMLCanvasElement,
   sectionBreaks: number[],
   background: HTMLImageElement,
-): void {
+  jpegQuality = 0.88,
+): string[] {
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
   const contentWidth = pdfWidth - PDF_PAGE_MARGIN_MM * 2;
@@ -294,9 +364,16 @@ function addCanvasPagesToPdf(
   while (sourceY < canvas.height) {
     const maximumEnd = Math.min(sourceY + pageHeightInPixels, canvas.height);
     const minimumUsefulEnd = sourceY + pageHeightInPixels * 0.55;
-    const preferredEnd = sectionBreaks
-      .filter((position) => position >= minimumUsefulEnd && position <= maximumEnd)
-      .at(-1);
+    // 剩余内容已经能放进当前页时直接收进来，不能再在页脚前强制分页。
+    const preferredEnd =
+      maximumEnd < canvas.height
+        ? sectionBreaks
+            .filter(
+              (position) =>
+                position >= minimumUsefulEnd && position <= maximumEnd,
+            )
+            .at(-1)
+        : undefined;
     const sliceEnd = preferredEnd ?? maximumEnd;
     pageRanges.push({ start: sourceY, end: sliceEnd });
     sourceY = sliceEnd;
@@ -306,6 +383,8 @@ function addCanvasPagesToPdf(
   const pageCanvasWidth = Math.round(pdfWidth * pixelsPerMillimeter);
   const pageCanvasHeight = Math.round(pdfHeight * pixelsPerMillimeter);
   const marginPixels = Math.round(PDF_PAGE_MARGIN_MM * pixelsPerMillimeter);
+
+  const previewPages: string[] = [];
 
   pageRanges.forEach(({ start, end }, pageIndex) => {
     const sliceHeight = end - start;
@@ -376,8 +455,10 @@ function addCanvasPagesToPdf(
       pageCanvas.height - Math.round(marginPixels * 0.42),
     );
 
+    const pageImage = pageCanvas.toDataURL('image/jpeg', jpegQuality);
+    previewPages.push(pageImage);
     pdf.addImage(
-      pageCanvas.toDataURL('image/jpeg', 0.9),
+      pageImage,
       'JPEG',
       0,
       0,
@@ -387,6 +468,8 @@ function addCanvasPagesToPdf(
       'FAST',
     );
   });
+
+  return previewPages;
 }
 
 const REPORT_TYPES: { value: ReportType; label: string; days: number }[] = [
@@ -637,7 +720,7 @@ const ScoreRing: React.FC<{ score: number }> = ({ score }) => {
   const offset = circumference * (1 - Math.min(100, Math.max(0, score)) / 100);
 
   return (
-    <div className="relative w-40 h-40">
+    <div data-pdf-score-ring className="relative w-40 h-40">
       <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
         <circle
           cx="50"
@@ -688,6 +771,7 @@ const SubScoreChip: React.FC<{
   const { bg, border } = getScoreLevelBg(score);
   return (
     <div
+      data-pdf-score-chip
       className="flex items-center gap-2 px-4 py-2 rounded-full shadow-sm"
       style={{
         backgroundColor: bg,
@@ -716,6 +800,9 @@ const ReportPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
+  const [pdfPreview, setPdfPreview] = useState<PdfPreviewState | null>(null);
+  const pdfPreviewUrlRef = useRef<string | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -828,6 +915,42 @@ const ReportPage: React.FC = () => {
     }
   }, [periodOpen]);
 
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrlRef.current) {
+        URL.revokeObjectURL(pdfPreviewUrlRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pdfPreview) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [pdfPreview]);
+
+  const closePdfPreview = (): void => {
+    setPdfPreview(null);
+    if (pdfPreviewUrlRef.current) {
+      URL.revokeObjectURL(pdfPreviewUrlRef.current);
+      pdfPreviewUrlRef.current = null;
+    }
+  };
+
+  const downloadPreviewPdf = (): void => {
+    if (!pdfPreview) return;
+    const link = document.createElement('a');
+    link.href = pdfPreview.pdfUrl;
+    link.download = pdfPreview.fileName;
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
   const handleGenerate = async (): Promise<void> => {
     try {
       setLoading(true);
@@ -879,17 +1002,11 @@ const ReportPage: React.FC = () => {
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(
       navigator.userAgent,
     );
-    const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-    const previewWindow = isMobile ? window.open('', '_blank') : null;
-
-    if (previewWindow) {
-      previewWindow.document.title = '正在生成健康报告';
-      previewWindow.document.body.innerHTML =
-        '<p style="font-family:sans-serif;padding:24px;color:#2a483a">正在生成健康报告，请稍候…</p>';
-    }
 
     try {
       setExporting(true);
+      setExportProgress('正在准备字体和背景…');
+      await waitForNextPaint();
       logger.info('[report] exporting PDF');
 
       const element = reportRef.current;
@@ -897,7 +1014,10 @@ const ReportPage: React.FC = () => {
       await waitForReportImages(element);
       const pdfBackground = await loadPdfBackground(reportPdfBackground);
 
-      const renderScale = isMobile ? 1.5 : 2;
+      setExportProgress('正在绘制报告页面…');
+      await waitForNextPaint();
+      // 1.3 倍足以清晰展示在手机上，同时显著降低内存和编码耗时。
+      const renderScale = isMobile ? 1.3 : 2;
       let sectionBreaks: number[] = [];
       const canvas = await html2canvas(element, {
         scale: renderScale,
@@ -923,8 +1043,16 @@ const ReportPage: React.FC = () => {
         },
       });
 
+      setExportProgress('正在生成 PDF 预览…');
+      await waitForNextPaint();
       const pdf = new jsPDF('p', 'mm', 'a4');
-      addCanvasPagesToPdf(pdf, canvas, sectionBreaks, pdfBackground);
+      const previewPages = addCanvasPagesToPdf(
+        pdf,
+        canvas,
+        sectionBreaks,
+        pdfBackground,
+        isMobile ? 0.82 : 0.88,
+      );
       const fileName = `健康报告_${reportData.startDate}_${reportData.endDate}.pdf`;
       pdf.setProperties({
         title: fileName.replace(/\.pdf$/i, ''),
@@ -934,32 +1062,22 @@ const ReportPage: React.FC = () => {
       });
       if (isMobile) {
         const pdfUrl = URL.createObjectURL(pdf.output('blob'));
-        if (previewWindow && !previewWindow.closed) {
-          previewWindow.location.replace(pdfUrl);
-        } else {
-          const previewLink = document.createElement('a');
-          previewLink.href = pdfUrl;
-          previewLink.target = '_blank';
-          previewLink.rel = 'noopener noreferrer';
-          previewLink.download = fileName;
-          previewLink.click();
+        if (pdfPreviewUrlRef.current) {
+          URL.revokeObjectURL(pdfPreviewUrlRef.current);
         }
-        window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 5 * 60 * 1000);
-        toast.success(
-          isWeChat
-            ? 'PDF 已生成，请在预览页右上角选择保存或在浏览器中打开'
-            : 'PDF 已生成并打开预览',
-        );
+        pdfPreviewUrlRef.current = pdfUrl;
+        setPdfPreview({ fileName, pdfUrl, pages: previewPages });
+        toast.success('PDF 已生成，可预览后选择保存');
       } else {
         pdf.save(fileName);
         toast.success('PDF 导出成功');
       }
     } catch (err) {
-      if (previewWindow && !previewWindow.closed) previewWindow.close();
       logger.error('[report] export PDF failed', { error: err });
       toast.error('导出失败，请稍后重试');
     } finally {
       setExporting(false);
+      setExportProgress('');
     }
   };
 
@@ -1295,7 +1413,7 @@ const ReportPage: React.FC = () => {
                {/* 圆形进度条 */}
                <div className="flex flex-col items-center">
                  <ScoreRing score={scores.overall} />
-                 <div className="flex flex-wrap justify-center gap-2 mt-5">
+                 <div data-pdf-score-list className="flex flex-wrap justify-center gap-2 mt-5">
                     <SubScoreChip icon={MoonStar} label="睡眠" score={scores.sleep} color="#8b7fb0" />
                     <SubScoreChip icon={Droplet} label="喝水" score={scores.water} color="#7a9fb5" />
                     <SubScoreChip icon={Dumbbell} label="运动" score={scores.exercise} color="#7da895" />
@@ -1400,7 +1518,7 @@ const ReportPage: React.FC = () => {
               <div className="bg-primary/5 rounded-xl p-6 space-y-3">
                 {advice.map((item, idx) => (
                   <div key={idx} className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <div data-pdf-advice-index className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-xs font-medium text-primary">{idx + 1}</span>
                     </div>
                     <p className="text-sm text-foreground leading-relaxed">{item}</p>
@@ -1418,6 +1536,110 @@ const ReportPage: React.FC = () => {
       )}
        </div>
        </div>
+       {exporting &&
+         typeof document !== 'undefined' &&
+         createPortal(
+           <div
+             className="fixed inset-0 flex items-center justify-center px-6"
+             style={{
+               zIndex: 10000,
+               backgroundColor: 'rgba(25, 45, 36, 0.48)',
+               backdropFilter: 'blur(5px)',
+               WebkitBackdropFilter: 'blur(5px)',
+             }}
+             role="status"
+             aria-live="polite"
+           >
+             <div
+               className="w-full max-w-xs rounded-3xl px-6 py-7 text-center shadow-2xl"
+               style={{ backgroundColor: '#fffdf7', color: '#2a483a' }}
+             >
+               <Loader2 className="mx-auto mb-4 animate-spin" size={30} />
+               <p className="text-base font-medium">
+                 {exportProgress || '正在生成健康报告…'}
+               </p>
+               <p className="mt-2 text-xs leading-relaxed" style={{ color: '#718278' }}>
+                 请保持页面打开，完成后会自动显示预览
+               </p>
+             </div>
+           </div>,
+           document.body,
+         )}
+
+       {pdfPreview &&
+         typeof document !== 'undefined' &&
+         createPortal(
+           <div
+             className="fixed inset-0 flex flex-col"
+             style={{ zIndex: 9999, backgroundColor: '#edf1ed' }}
+             role="dialog"
+             aria-modal="true"
+             aria-label="PDF 预览"
+           >
+             <div
+               className="flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 shadow-sm"
+               style={{
+                 paddingTop: 'max(12px, env(safe-area-inset-top))',
+                 backgroundColor: '#fffdf8',
+                 borderColor: '#dce5df',
+               }}
+             >
+               <button
+                 type="button"
+                 onClick={closePdfPreview}
+                 className="flex h-10 w-10 items-center justify-center rounded-full text-2xl"
+                 style={{ color: '#315242', backgroundColor: '#edf4ef' }}
+                 aria-label="关闭 PDF 预览"
+               >
+                 ×
+               </button>
+               <div className="min-w-0 flex-1 text-center">
+                 <p className="truncate text-base font-medium" style={{ color: '#254739' }}>
+                   PDF 预览
+                 </p>
+                 <p className="text-xs" style={{ color: '#72857a' }}>
+                   共 {pdfPreview.pages.length} 页
+                 </p>
+               </div>
+               <button
+                 type="button"
+                 onClick={downloadPreviewPdf}
+                 className="flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium shadow-sm"
+                 style={{ color: '#fff', backgroundColor: '#315f49' }}
+               >
+                 <Download size={15} />
+                 保存
+               </button>
+             </div>
+
+             <div
+               className="flex-1 overflow-y-auto px-3 py-4"
+               style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
+             >
+               <div className="mx-auto flex max-w-3xl flex-col gap-4">
+                 {pdfPreview.pages.map((page, index) => (
+                   <figure key={index} className="m-0">
+                     <img
+                       src={page}
+                       alt={`健康报告第 ${index + 1} 页`}
+                       className="block h-auto w-full bg-white shadow-lg"
+                     />
+                     <figcaption
+                       className="pt-2 text-center text-xs"
+                       style={{ color: '#6f7f76' }}
+                     >
+                       第 {index + 1} 页
+                     </figcaption>
+                   </figure>
+                 ))}
+                 <p className="px-4 text-center text-xs leading-relaxed" style={{ color: '#6f7f76' }}>
+                   微信内如无法直接保存 PDF，可点击右上角菜单选择“在浏览器打开”。
+                 </p>
+               </div>
+             </div>
+           </div>,
+           document.body,
+         )}
      </div>
    );
  };

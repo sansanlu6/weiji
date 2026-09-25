@@ -27,6 +27,10 @@ import WaterDialog from '@client/src/components/record-dialogs/WaterDialog';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
 import osmanthusBranch from '@client/src/assets/osmanthus-branch.png';
+import {
+  getHomePageCache,
+  setHomePageCache,
+} from '@client/src/utils/home-page-cache';
 
 const quickActions = [
   { type: 'water' as const, icon: Droplet, label: '喝水', bg: 'var(--color-water-soft)', color: 'var(--color-water)' },
@@ -46,23 +50,10 @@ const moduleColorMap: Record<string, { bg: string; color: string }> = {
   poop: { bg: '#e8f0ec', color: '#7ba89a' },
 };
 
-interface HomePageCacheEntry {
-  overview: TodayOverview;
-  recent: RecentRecord[];
-  cachedAt: number;
-}
-
-const HOME_CACHE_TTL_MS = 2 * 60 * 1000;
-const homePageCache = new Map<string, HomePageCacheEntry>();
-
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-  const cachedAtMount = user?.id ? homePageCache.get(user.id) : undefined;
-  const initialCache =
-    cachedAtMount && Date.now() - cachedAtMount.cachedAt < HOME_CACHE_TTL_MS
-      ? cachedAtMount
-      : undefined;
+  const initialCache = user?.id ? getHomePageCache(user.id) : undefined;
   const [overview, setOverview] = useState<TodayOverview | null>(
     initialCache?.overview ?? null,
   );
@@ -84,11 +75,7 @@ const HomePage: React.FC = () => {
       ]);
       setOverview(ov);
       setRecent(rec);
-      homePageCache.set(user.id, {
-        overview: ov,
-        recent: rec,
-        cachedAt: Date.now(),
-      });
+      setHomePageCache(user.id, ov, rec);
     } catch (err) {
       logger.error('加载首页数据失败', err as Error);
       setError('加载失败，请稍后重试');
@@ -100,8 +87,8 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
 
-    const cached = homePageCache.get(user.id);
-    if (cached && Date.now() - cached.cachedAt < HOME_CACHE_TTL_MS) {
+    const cached = getHomePageCache(user.id);
+    if (cached) {
       setOverview(cached.overview);
       setRecent(cached.recent);
       setError(null);
