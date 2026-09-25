@@ -1,5 +1,5 @@
-import { Controller, Get, Render, Req } from '@nestjs/common';
-import type { Request } from 'express';
+import { Controller, Get, Render, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
 
 const APP_NAME = '记录微小，留下痕迹';
 
@@ -12,12 +12,16 @@ export class ViewController {
   @Render('index')
   async render(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{
     __platform__: string;
     basename: string;
     appName: string;
     appDescription: string;
   }> {
+    // HTML 必须每次向服务器确认版本，避免旧入口继续引用新部署中已删除的哈希分包。
+    res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+
     const requestPlatformData = req.__platform_data__ ?? {};
     const requestPublished = isRecord(requestPlatformData.appPublished)
       ? requestPlatformData.appPublished
