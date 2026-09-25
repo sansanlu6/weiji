@@ -139,7 +139,7 @@ function preparePdfClone(
   clonedReport.style.width = `${PDF_RENDER_WIDTH_PX}px`;
   clonedReport.style.maxWidth = 'none';
   clonedReport.style.height = 'auto';
-  clonedReport.style.padding = '36px 44px 28px';
+  clonedReport.style.padding = '24px 38px 18px';
   clonedReport.style.border = 'none';
   clonedReport.style.borderRadius = '0';
   clonedReport.style.backgroundColor = 'transparent';
@@ -151,7 +151,7 @@ function preparePdfClone(
 
   Array.from(clonedReport.children).forEach((child, index) => {
     if (index === 0 || !(child instanceof HTMLElement)) return;
-    child.style.setProperty('margin-block-start', '22px', 'important');
+    child.style.setProperty('margin-block-start', '14px', 'important');
   });
 
   const pdfOnly = clonedReport.querySelector<HTMLElement>('[data-pdf-only]');
@@ -162,22 +162,22 @@ function preparePdfClone(
     pdfOnly.style.fontWeight = '500';
     pdfOnly.style.letterSpacing = '0.18em';
     pdfOnly.style.color = '#8a9d92';
-    pdfOnly.style.marginBottom = '10px';
+    pdfOnly.style.marginBottom = '5px';
   }
 
   const reportHeader = clonedReport.querySelector<HTMLElement>(
     '[data-pdf-section="header"]',
   );
   if (reportHeader) {
-    reportHeader.style.minHeight = '94px';
-    reportHeader.style.padding = '4px 0 20px';
+    reportHeader.style.minHeight = '74px';
+    reportHeader.style.padding = '0 0 12px';
     reportHeader.style.borderBottom = '1px solid rgba(67, 104, 85, 0.18)';
   }
 
   const reportTitle = clonedReport.querySelector<HTMLElement>('[data-pdf-title]');
   if (reportTitle) {
     reportTitle.style.fontFamily = PDF_SERIF_FONT;
-    reportTitle.style.fontSize = '30px';
+    reportTitle.style.fontSize = '28px';
     reportTitle.style.fontWeight = '600';
     reportTitle.style.lineHeight = '1.25';
     reportTitle.style.letterSpacing = '0.08em';
@@ -187,7 +187,7 @@ function preparePdfClone(
   const reportPeriod = clonedReport.querySelector<HTMLElement>('[data-pdf-period]');
   if (reportPeriod) {
     reportPeriod.style.width = 'auto';
-    reportPeriod.style.marginTop = '8px';
+    reportPeriod.style.marginTop = '4px';
     reportPeriod.style.fontSize = '12px';
     reportPeriod.style.letterSpacing = '0.04em';
     reportPeriod.style.color = '#71877b';
@@ -198,10 +198,10 @@ function preparePdfClone(
   );
   if (scoreSection) {
     scoreSection.style.display = 'grid';
-    scoreSection.style.gridTemplateColumns = '210px minmax(0, 1fr)';
+    scoreSection.style.gridTemplateColumns = '188px minmax(0, 1fr)';
     scoreSection.style.alignItems = 'center';
-    scoreSection.style.gap = '30px';
-    scoreSection.style.padding = '8px 10px 4px';
+    scoreSection.style.gap = '20px';
+    scoreSection.style.padding = '0 8px';
     scoreSection.style.border = 'none';
     scoreSection.style.borderRadius = '0';
     scoreSection.style.backgroundColor = 'transparent';
@@ -213,14 +213,27 @@ function preparePdfClone(
       grid.style.gridColumn = '2 / 3';
       grid.style.alignSelf = 'center';
       grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-      grid.style.columnGap = '14px';
-      grid.style.rowGap = '22px';
+      grid.style.columnGap = '10px';
+      grid.style.rowGap = '10px';
+
+      Array.from(grid.children).forEach((card) => {
+        if (!(card instanceof HTMLElement)) return;
+        card.style.padding = '8px 6px';
+        card.style.minHeight = '72px';
+        card.style.justifyContent = 'center';
+        card.style.gap = '0';
+        const icon = card.querySelector<SVGElement>('svg');
+        if (icon) icon.style.marginBottom = '3px';
+        Array.from(card.querySelectorAll<HTMLElement>('div')).forEach((text) => {
+          text.style.lineHeight = '1.2';
+        });
+      });
     });
 
   const scoreRing = clonedReport.querySelector<HTMLElement>('[data-pdf-score-ring]');
   if (scoreRing) {
-    scoreRing.style.width = '148px';
-    scoreRing.style.height = '148px';
+    scoreRing.style.width = '132px';
+    scoreRing.style.height = '132px';
   }
 
   const scoreList = clonedReport.querySelector<HTMLElement>('[data-pdf-score-list]');
@@ -228,16 +241,30 @@ function preparePdfClone(
     scoreList.style.flexDirection = 'column';
     scoreList.style.flexWrap = 'nowrap';
     scoreList.style.alignItems = 'center';
-    scoreList.style.gap = '6px';
-    scoreList.style.marginTop = '10px';
+    scoreList.style.gap = '4px';
+    scoreList.style.marginTop = '6px';
   }
 
   clonedReport
     .querySelectorAll<HTMLElement>('[data-pdf-score-chip]')
     .forEach((chip) => {
-      chip.style.minWidth = '126px';
-      chip.style.padding = '5px 12px';
-      chip.style.gap = '7px';
+      chip.style.minWidth = '118px';
+      chip.style.height = '26px';
+      chip.style.padding = '3px 10px';
+      chip.style.gap = '6px';
+      chip.style.alignItems = 'center';
+      chip.style.lineHeight = '1';
+      chip.querySelectorAll<HTMLElement>('span').forEach((label) => {
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.height = '18px';
+        label.style.lineHeight = '18px';
+      });
+      const icon = chip.querySelector<SVGElement>('svg');
+      if (icon) {
+        icon.style.display = 'block';
+        icon.style.flexShrink = '0';
+      }
     });
 
   clonedReport
@@ -251,19 +278,75 @@ function preparePdfClone(
 
   clonedReport.querySelectorAll<HTMLElement>('[data-pdf-heading]').forEach((heading) => {
     heading.style.fontFamily = PDF_SERIF_FONT;
-    heading.style.fontSize = '19px';
+    heading.style.fontSize = '17px';
     heading.style.fontWeight = '600';
     heading.style.letterSpacing = '0.04em';
     heading.style.color = '#2b5745';
-    heading.style.paddingBottom = '8px';
+    heading.style.paddingBottom = '5px';
+    heading.style.marginBottom = '9px';
+    heading.style.lineHeight = '22px';
+    heading.style.alignItems = 'center';
     heading.style.borderBottom = '1px solid rgba(67, 104, 85, 0.2)';
   });
 
   const analysisGrid = clonedReport.querySelector<HTMLElement>('[data-pdf-analysis-grid]');
   if (analysisGrid) {
     analysisGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-    analysisGrid.style.gap = '14px';
+    analysisGrid.style.gap = '10px';
+    analysisGrid.style.setProperty('margin-top', '0', 'important');
+    Array.from(analysisGrid.children).forEach((card) => {
+      if (!(card instanceof HTMLElement)) return;
+      card.style.padding = '10px 12px';
+      const cardHeader = card.firstElementChild;
+      if (cardHeader instanceof HTMLElement) {
+        cardHeader.style.display = 'flex';
+        cardHeader.style.alignItems = 'center';
+        cardHeader.style.minHeight = '20px';
+        cardHeader.style.marginBottom = '4px';
+        cardHeader.style.lineHeight = '20px';
+        cardHeader.querySelectorAll<HTMLElement>('span').forEach((label) => {
+          label.style.display = 'flex';
+          label.style.alignItems = 'center';
+          label.style.height = '20px';
+          label.style.lineHeight = '20px';
+        });
+        const icon = cardHeader.querySelector<SVGElement>('svg');
+        if (icon) {
+          icon.style.display = 'block';
+          icon.style.flexShrink = '0';
+        }
+      }
+      const paragraph = card.querySelector<HTMLElement>('p');
+      if (paragraph) {
+        paragraph.style.fontSize = '13px';
+        paragraph.style.lineHeight = '1.5';
+      }
+    });
   }
+
+  const adviceList = clonedReport.querySelector<HTMLElement>(
+    '[data-pdf-advice-list]',
+  );
+  if (adviceList) {
+    adviceList.style.display = 'flex';
+    adviceList.style.flexDirection = 'column';
+    adviceList.style.padding = '10px 14px';
+    adviceList.style.gap = '5px';
+    adviceList.style.setProperty('margin-top', '0', 'important');
+  }
+
+  clonedReport
+    .querySelectorAll<HTMLElement>('[data-pdf-advice-item]')
+    .forEach((item) => {
+      item.style.alignItems = 'center';
+      item.style.gap = '10px';
+      item.style.setProperty('margin-top', '0', 'important');
+      const paragraph = item.querySelector<HTMLElement>('p');
+      if (paragraph) {
+        paragraph.style.fontSize = '13px';
+        paragraph.style.lineHeight = '20px';
+      }
+    });
 
   clonedReport
     .querySelectorAll<HTMLElement>('[data-pdf-advice-index]')
@@ -271,17 +354,18 @@ function preparePdfClone(
       index.style.setProperty('display', 'flex', 'important');
       index.style.setProperty('align-items', 'center', 'important');
       index.style.setProperty('justify-content', 'center', 'important');
-      index.style.width = '24px';
-      index.style.height = '24px';
+      index.style.width = '22px';
+      index.style.height = '22px';
       index.style.padding = '0';
+      index.style.marginTop = '0';
       index.style.lineHeight = '1';
       index.style.textAlign = 'center';
       const label = index.querySelector<HTMLElement>('span');
       if (label) {
         label.style.display = 'block';
-        label.style.width = '24px';
-        label.style.height = '24px';
-        label.style.lineHeight = '24px';
+        label.style.width = '22px';
+        label.style.height = '22px';
+        label.style.lineHeight = '22px';
         label.style.textAlign = 'center';
       }
     });
@@ -290,10 +374,8 @@ function preparePdfClone(
     '[data-pdf-section="footer"]',
   );
   if (reportFooter) {
-    reportFooter.style.paddingTop = '14px';
-    reportFooter.style.fontSize = '10px';
-    reportFooter.style.letterSpacing = '0.08em';
-    reportFooter.style.color = '#819288';
+    // 每张 PDF 页面已经绘制统一页脚，不再让网页页脚占用正文高度。
+    reportFooter.style.display = 'none';
   }
 
   const colorCanvas = clonedDocument.createElement('canvas');
@@ -358,25 +440,30 @@ function addCanvasPagesToPdf(
     1,
     Math.floor(contentHeight / millimetersPerPixel),
   );
+  // 周报通常只比一页略高。此时小幅等比缩放比把健康建议单独推到第二页更易读。
+  const fitOnSinglePage = canvas.height <= pageHeightInPixels * 1.32;
 
   const pageRanges: { start: number; end: number }[] = [];
-  let sourceY = 0;
-  while (sourceY < canvas.height) {
-    const maximumEnd = Math.min(sourceY + pageHeightInPixels, canvas.height);
-    const minimumUsefulEnd = sourceY + pageHeightInPixels * 0.55;
-    // 剩余内容已经能放进当前页时直接收进来，不能再在页脚前强制分页。
-    const preferredEnd =
-      maximumEnd < canvas.height
-        ? sectionBreaks
-            .filter(
-              (position) =>
-                position >= minimumUsefulEnd && position <= maximumEnd,
-            )
-            .at(-1)
-        : undefined;
-    const sliceEnd = preferredEnd ?? maximumEnd;
-    pageRanges.push({ start: sourceY, end: sliceEnd });
-    sourceY = sliceEnd;
+  if (fitOnSinglePage) {
+    pageRanges.push({ start: 0, end: canvas.height });
+  } else {
+    let sourceY = 0;
+    while (sourceY < canvas.height) {
+      const maximumEnd = Math.min(sourceY + pageHeightInPixels, canvas.height);
+      const minimumUsefulEnd = sourceY + pageHeightInPixels * 0.55;
+      const preferredEnd =
+        maximumEnd < canvas.height
+          ? sectionBreaks
+              .filter(
+                (position) =>
+                  position >= minimumUsefulEnd && position <= maximumEnd,
+              )
+              .at(-1)
+          : undefined;
+      const sliceEnd = preferredEnd ?? maximumEnd;
+      pageRanges.push({ start: sourceY, end: sliceEnd });
+      sourceY = sliceEnd;
+    }
   }
 
   const pixelsPerMillimeter = canvas.width / contentWidth;
@@ -388,6 +475,13 @@ function addCanvasPagesToPdf(
 
   pageRanges.forEach(({ start, end }, pageIndex) => {
     const sliceHeight = end - start;
+    const contentScale =
+      pageRanges.length === 1
+        ? Math.min(1, pageHeightInPixels / sliceHeight)
+        : 1;
+    const renderedWidth = Math.round(canvas.width * contentScale);
+    const renderedHeight = Math.round(sliceHeight * contentScale);
+    const renderedX = marginPixels + Math.round((canvas.width - renderedWidth) / 2);
     const pageCanvas = document.createElement('canvas');
     pageCanvas.width = pageCanvasWidth;
     pageCanvas.height = pageCanvasHeight;
@@ -430,10 +524,10 @@ function addCanvasPagesToPdf(
       start,
       canvas.width,
       sliceHeight,
+      renderedX,
       marginPixels,
-      marginPixels,
-      canvas.width,
-      sliceHeight,
+      renderedWidth,
+      renderedHeight,
     );
 
     if (pageIndex > 0) pdf.addPage();
@@ -1515,9 +1609,9 @@ const ReportPage: React.FC = () => {
                 <Heart size={20} className="text-primary" />
                 健康建议
               </h3>
-              <div className="bg-primary/5 rounded-xl p-6 space-y-3">
+              <div data-pdf-advice-list className="bg-primary/5 rounded-xl p-6 space-y-3">
                 {advice.map((item, idx) => (
-                  <div key={idx} className="flex gap-3">
+                  <div key={idx} data-pdf-advice-item className="flex gap-3">
                     <div data-pdf-advice-index className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-xs font-medium text-primary">{idx + 1}</span>
                     </div>
