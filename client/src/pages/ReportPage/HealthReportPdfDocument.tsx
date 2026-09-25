@@ -11,8 +11,12 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer';
-import reportBackground from '@client/src/assets/health-report-pdf-bg-v1.jpg';
-import reportFont from '@client/src/assets/fonts/NotoSansSC-Report.ttf';
+// PDF 在浏览器中生成时会自行读取字体和图片。强制内嵌可避免部署环境、
+// WebView 或监控 SDK 改写 fetch 后导致静态资源请求失败。
+// eslint-disable-next-line import/no-unresolved
+import reportBackground from '@client/src/assets/health-report-pdf-bg-v1.jpg?inline';
+// eslint-disable-next-line import/no-unresolved
+import reportFont from '@client/src/assets/fonts/NotoSansSC-Report.ttf?inline';
 
 Font.register({
   family: 'NotoSansSCReport',

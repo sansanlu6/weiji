@@ -1207,8 +1207,17 @@ const ReportPage: React.FC = () => {
         toast.success('PDF 导出成功');
       }
     } catch (err) {
-      logger.error('[report] export PDF failed', { error: err });
-      toast.error('导出失败，请稍后重试');
+      const errorMessage =
+        err instanceof Error
+          ? `${err.name}: ${err.message}`
+          : typeof err === 'string'
+            ? err
+            : JSON.stringify(err);
+      logger.error('[report] export PDF failed', {
+        error: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      toast.error(`导出失败：${errorMessage || '未知错误'}`);
     } finally {
       setExporting(false);
       setExportProgress('');
