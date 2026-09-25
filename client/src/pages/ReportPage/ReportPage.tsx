@@ -139,7 +139,7 @@ function preparePdfClone(
   clonedReport.style.width = `${PDF_RENDER_WIDTH_PX}px`;
   clonedReport.style.maxWidth = 'none';
   clonedReport.style.height = 'auto';
-  clonedReport.style.padding = '24px 38px 18px';
+  clonedReport.style.padding = '32px 42px 24px';
   clonedReport.style.border = 'none';
   clonedReport.style.borderRadius = '0';
   clonedReport.style.backgroundColor = 'transparent';
@@ -151,7 +151,7 @@ function preparePdfClone(
 
   Array.from(clonedReport.children).forEach((child, index) => {
     if (index === 0 || !(child instanceof HTMLElement)) return;
-    child.style.setProperty('margin-block-start', '14px', 'important');
+    child.style.setProperty('margin-block-start', '20px', 'important');
   });
 
   const pdfOnly = clonedReport.querySelector<HTMLElement>('[data-pdf-only]');
@@ -162,22 +162,22 @@ function preparePdfClone(
     pdfOnly.style.fontWeight = '500';
     pdfOnly.style.letterSpacing = '0.18em';
     pdfOnly.style.color = '#8a9d92';
-    pdfOnly.style.marginBottom = '5px';
+    pdfOnly.style.marginBottom = '7px';
   }
 
   const reportHeader = clonedReport.querySelector<HTMLElement>(
     '[data-pdf-section="header"]',
   );
   if (reportHeader) {
-    reportHeader.style.minHeight = '74px';
-    reportHeader.style.padding = '0 0 12px';
+    reportHeader.style.minHeight = '86px';
+    reportHeader.style.padding = '2px 0 16px';
     reportHeader.style.borderBottom = '1px solid rgba(67, 104, 85, 0.18)';
   }
 
   const reportTitle = clonedReport.querySelector<HTMLElement>('[data-pdf-title]');
   if (reportTitle) {
     reportTitle.style.fontFamily = PDF_SERIF_FONT;
-    reportTitle.style.fontSize = '28px';
+    reportTitle.style.fontSize = '30px';
     reportTitle.style.fontWeight = '600';
     reportTitle.style.lineHeight = '1.25';
     reportTitle.style.letterSpacing = '0.08em';
@@ -187,7 +187,7 @@ function preparePdfClone(
   const reportPeriod = clonedReport.querySelector<HTMLElement>('[data-pdf-period]');
   if (reportPeriod) {
     reportPeriod.style.width = 'auto';
-    reportPeriod.style.marginTop = '4px';
+    reportPeriod.style.marginTop = '6px';
     reportPeriod.style.fontSize = '12px';
     reportPeriod.style.letterSpacing = '0.04em';
     reportPeriod.style.color = '#71877b';
@@ -198,10 +198,10 @@ function preparePdfClone(
   );
   if (scoreSection) {
     scoreSection.style.display = 'grid';
-    scoreSection.style.gridTemplateColumns = '188px minmax(0, 1fr)';
+    scoreSection.style.gridTemplateColumns = '210px minmax(0, 1fr)';
     scoreSection.style.alignItems = 'center';
-    scoreSection.style.gap = '20px';
-    scoreSection.style.padding = '0 8px';
+    scoreSection.style.gap = '30px';
+    scoreSection.style.padding = '6px 8px';
     scoreSection.style.border = 'none';
     scoreSection.style.borderRadius = '0';
     scoreSection.style.backgroundColor = 'transparent';
@@ -213,17 +213,17 @@ function preparePdfClone(
       grid.style.gridColumn = '2 / 3';
       grid.style.alignSelf = 'center';
       grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
-      grid.style.columnGap = '10px';
-      grid.style.rowGap = '10px';
+      grid.style.columnGap = '14px';
+      grid.style.rowGap = '18px';
 
       Array.from(grid.children).forEach((card) => {
         if (!(card instanceof HTMLElement)) return;
-        card.style.padding = '8px 6px';
-        card.style.minHeight = '72px';
+        card.style.padding = '12px 8px';
+        card.style.minHeight = '88px';
         card.style.justifyContent = 'center';
         card.style.gap = '0';
         const icon = card.querySelector<SVGElement>('svg');
-        if (icon) icon.style.marginBottom = '3px';
+        if (icon) icon.style.marginBottom = '6px';
         Array.from(card.querySelectorAll<HTMLElement>('div')).forEach((text) => {
           text.style.lineHeight = '1.2';
         });
@@ -232,8 +232,27 @@ function preparePdfClone(
 
   const scoreRing = clonedReport.querySelector<HTMLElement>('[data-pdf-score-ring]');
   if (scoreRing) {
-    scoreRing.style.width = '132px';
-    scoreRing.style.height = '132px';
+    scoreRing.style.width = '150px';
+    scoreRing.style.height = '150px';
+  }
+
+  const scoreCenter = clonedReport.querySelector<HTMLElement>(
+    '[data-pdf-score-center]',
+  );
+  if (scoreCenter) {
+    scoreCenter.style.setProperty('position', 'absolute', 'important');
+    scoreCenter.style.setProperty('inset', '0', 'important');
+    scoreCenter.style.setProperty('display', 'flex', 'important');
+    scoreCenter.style.setProperty('align-items', 'center', 'important');
+    scoreCenter.style.setProperty('justify-content', 'center', 'important');
+    scoreCenter.style.setProperty('height', '150px', 'important');
+    scoreCenter.style.setProperty('padding', '0', 'important');
+    scoreCenter.style.setProperty('transform', 'translateY(-1px)', 'important');
+    scoreCenter.querySelectorAll<HTMLElement>('span').forEach((line) => {
+      line.style.display = 'block';
+      line.style.marginTop = '0';
+      line.style.lineHeight = '1.25';
+    });
   }
 
   const scoreList = clonedReport.querySelector<HTMLElement>('[data-pdf-score-list]');
@@ -241,16 +260,16 @@ function preparePdfClone(
     scoreList.style.flexDirection = 'column';
     scoreList.style.flexWrap = 'nowrap';
     scoreList.style.alignItems = 'center';
-    scoreList.style.gap = '4px';
-    scoreList.style.marginTop = '6px';
+    scoreList.style.gap = '5px';
+    scoreList.style.marginTop = '14px';
   }
 
   clonedReport
     .querySelectorAll<HTMLElement>('[data-pdf-score-chip]')
     .forEach((chip) => {
-      chip.style.minWidth = '118px';
-      chip.style.height = '26px';
-      chip.style.padding = '3px 10px';
+      chip.style.minWidth = '126px';
+      chip.style.height = '28px';
+      chip.style.padding = '5px 11px';
       chip.style.gap = '6px';
       chip.style.alignItems = 'center';
       chip.style.lineHeight = '1';
@@ -278,25 +297,42 @@ function preparePdfClone(
 
   clonedReport.querySelectorAll<HTMLElement>('[data-pdf-heading]').forEach((heading) => {
     heading.style.fontFamily = PDF_SERIF_FONT;
-    heading.style.fontSize = '17px';
+    heading.style.setProperty('display', 'flex', 'important');
+    heading.style.setProperty('align-items', 'center', 'important');
+    heading.style.fontSize = '18px';
     heading.style.fontWeight = '600';
     heading.style.letterSpacing = '0.04em';
     heading.style.color = '#2b5745';
-    heading.style.paddingBottom = '5px';
-    heading.style.marginBottom = '9px';
-    heading.style.lineHeight = '22px';
-    heading.style.alignItems = 'center';
+    heading.style.height = '30px';
+    heading.style.paddingBottom = '6px';
+    heading.style.marginBottom = '12px';
+    heading.style.lineHeight = '24px';
     heading.style.borderBottom = '1px solid rgba(67, 104, 85, 0.2)';
+    const headingIcon = heading.querySelector<SVGElement>('svg');
+    if (headingIcon) {
+      headingIcon.style.display = 'block';
+      headingIcon.style.flexShrink = '0';
+      headingIcon.style.margin = '0';
+    }
+    const headingLabel = heading.querySelector<HTMLElement>(
+      '[data-pdf-heading-label]',
+    );
+    if (headingLabel) {
+      headingLabel.style.display = 'flex';
+      headingLabel.style.alignItems = 'center';
+      headingLabel.style.height = '20px';
+      headingLabel.style.lineHeight = '20px';
+    }
   });
 
   const analysisGrid = clonedReport.querySelector<HTMLElement>('[data-pdf-analysis-grid]');
   if (analysisGrid) {
     analysisGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-    analysisGrid.style.gap = '10px';
+    analysisGrid.style.gap = '14px';
     analysisGrid.style.setProperty('margin-top', '0', 'important');
     Array.from(analysisGrid.children).forEach((card) => {
       if (!(card instanceof HTMLElement)) return;
-      card.style.padding = '10px 12px';
+      card.style.padding = '14px 16px';
       const cardHeader = card.firstElementChild;
       if (cardHeader instanceof HTMLElement) {
         cardHeader.style.display = 'flex';
@@ -318,8 +354,8 @@ function preparePdfClone(
       }
       const paragraph = card.querySelector<HTMLElement>('p');
       if (paragraph) {
-        paragraph.style.fontSize = '13px';
-        paragraph.style.lineHeight = '1.5';
+        paragraph.style.fontSize = '13.5px';
+        paragraph.style.lineHeight = '1.55';
       }
     });
   }
@@ -330,8 +366,8 @@ function preparePdfClone(
   if (adviceList) {
     adviceList.style.display = 'flex';
     adviceList.style.flexDirection = 'column';
-    adviceList.style.padding = '10px 14px';
-    adviceList.style.gap = '5px';
+    adviceList.style.padding = '14px 18px';
+    adviceList.style.gap = '7px';
     adviceList.style.setProperty('margin-top', '0', 'important');
   }
 
@@ -343,8 +379,8 @@ function preparePdfClone(
       item.style.setProperty('margin-top', '0', 'important');
       const paragraph = item.querySelector<HTMLElement>('p');
       if (paragraph) {
-        paragraph.style.fontSize = '13px';
-        paragraph.style.lineHeight = '20px';
+        paragraph.style.fontSize = '13.5px';
+        paragraph.style.lineHeight = '21px';
       }
     });
 
@@ -837,7 +873,7 @@ const ScoreRing: React.FC<{ score: number }> = ({ score }) => {
           style={{ transition: 'stroke-dashoffset 1s ease-out, stroke 0.5s ease' }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div data-pdf-score-center className="absolute inset-0 flex flex-col items-center justify-center">
         <span
           className="text-4xl font-bold tabular-nums font-sans-hei"
           style={{ color }}
@@ -1549,7 +1585,7 @@ const ReportPage: React.FC = () => {
             <div data-pdf-section="analysis" className="space-y-4">
               <h3 data-pdf-heading className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
                 <Heart size={20} className="text-primary" />
-                维度分析
+                <span data-pdf-heading-label>维度分析</span>
               </h3>
               <div data-pdf-analysis-grid className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-module-sleep-bg rounded-xl p-5">
@@ -1607,7 +1643,7 @@ const ReportPage: React.FC = () => {
             <div data-pdf-section="advice" className="space-y-4">
               <h3 data-pdf-heading className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
                 <Heart size={20} className="text-primary" />
-                健康建议
+                <span data-pdf-heading-label>健康建议</span>
               </h3>
               <div data-pdf-advice-list className="bg-primary/5 rounded-xl p-6 space-y-3">
                 {advice.map((item, idx) => (
