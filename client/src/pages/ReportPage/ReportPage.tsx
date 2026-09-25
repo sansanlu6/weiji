@@ -31,6 +31,7 @@ import {
 } from '@client/src/api/stats';
 import PageBackground from '@client/src/components/PageBackground';
 import { Image } from '@client/src/components/ui/image';
+import reportPdfBackground from '@client/src/assets/health-report-pdf-bg-v1.png';
 import type {
   StatsItem,
   MoodDistribution,
@@ -59,8 +60,12 @@ interface ScoreBreakdown {
   overall: number;
 }
 
-const PDF_PAGE_MARGIN_MM = 10;
+const PDF_PAGE_MARGIN_MM = 9;
 const PDF_RENDER_WIDTH_PX = 794;
+const PDF_SERIF_FONT =
+  '"Noto Serif SC", "Source Han Serif CN", "思源宋体", "Songti SC", serif';
+const PDF_SANS_FONT =
+  '"Source Han Sans SC", "Noto Sans SC", "思源黑体", "PingFang SC", "Microsoft YaHei", sans-serif';
 const PDF_COLOR_PROPERTIES = [
   'color',
   'background-color',
@@ -97,6 +102,15 @@ function waitForReportImages(element: HTMLElement): Promise<void> {
   ).then(() => undefined);
 }
 
+function loadPdfBackground(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('健康报告背景加载失败'));
+    image.src = src;
+  });
+}
+
 /**
  * html2canvas 目前无法解析 Tailwind 生成的 oklab/oklch/color-mix 颜色。
  * 在它创建的副本中将这些颜色转换为普通 rgba，并移除截图不稳定的滤镜。
@@ -112,10 +126,106 @@ function preparePdfClone(
   clonedReport.style.width = `${PDF_RENDER_WIDTH_PX}px`;
   clonedReport.style.maxWidth = 'none';
   clonedReport.style.height = 'auto';
-  clonedReport.style.backgroundColor = '#ffffff';
+  clonedReport.style.padding = '42px 44px 38px';
+  clonedReport.style.border = 'none';
+  clonedReport.style.borderRadius = '0';
+  clonedReport.style.backgroundColor = 'transparent';
+  clonedReport.style.color = '#385348';
+  clonedReport.style.fontFamily = PDF_SANS_FONT;
   clonedReport.style.backdropFilter = 'none';
   clonedReport.style.setProperty('-webkit-backdrop-filter', 'none');
   clonedReport.style.boxShadow = 'none';
+
+  const pdfOnly = clonedReport.querySelector<HTMLElement>('[data-pdf-only]');
+  if (pdfOnly) {
+    pdfOnly.style.setProperty('display', 'block', 'important');
+    pdfOnly.style.fontFamily = PDF_SANS_FONT;
+    pdfOnly.style.fontSize = '11px';
+    pdfOnly.style.fontWeight = '500';
+    pdfOnly.style.letterSpacing = '0.18em';
+    pdfOnly.style.color = '#8a9d92';
+    pdfOnly.style.marginBottom = '10px';
+  }
+
+  const reportHeader = clonedReport.querySelector<HTMLElement>(
+    '[data-pdf-section="header"]',
+  );
+  if (reportHeader) {
+    reportHeader.style.minHeight = '94px';
+    reportHeader.style.padding = '4px 0 20px';
+    reportHeader.style.borderBottom = '1px solid rgba(67, 104, 85, 0.18)';
+  }
+
+  const reportTitle = clonedReport.querySelector<HTMLElement>('[data-pdf-title]');
+  if (reportTitle) {
+    reportTitle.style.fontFamily = PDF_SERIF_FONT;
+    reportTitle.style.fontSize = '30px';
+    reportTitle.style.fontWeight = '600';
+    reportTitle.style.lineHeight = '1.25';
+    reportTitle.style.letterSpacing = '0.08em';
+    reportTitle.style.color = '#214d3c';
+  }
+
+  const reportPeriod = clonedReport.querySelector<HTMLElement>('[data-pdf-period]');
+  if (reportPeriod) {
+    reportPeriod.style.width = 'auto';
+    reportPeriod.style.marginTop = '8px';
+    reportPeriod.style.fontSize = '12px';
+    reportPeriod.style.letterSpacing = '0.04em';
+    reportPeriod.style.color = '#71877b';
+  }
+
+  const scoreSection = clonedReport.querySelector<HTMLElement>(
+    '[data-pdf-section="score"]',
+  );
+  if (scoreSection) {
+    scoreSection.style.gridTemplateColumns = '210px minmax(0, 1fr)';
+    scoreSection.style.gap = '26px';
+    scoreSection.style.padding = '24px';
+    scoreSection.style.border = '1px solid rgba(73, 113, 92, 0.12)';
+    scoreSection.style.borderRadius = '20px';
+    scoreSection.style.backgroundColor = 'rgba(255, 255, 252, 0.88)';
+  }
+
+  clonedReport
+    .querySelectorAll<HTMLElement>('[data-pdf-metric-grid]')
+    .forEach((grid) => {
+      grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))';
+      grid.style.gap = '12px';
+    });
+
+  clonedReport
+    .querySelectorAll<HTMLElement>('[data-pdf-section="analysis"], [data-pdf-section="advice"]')
+    .forEach((section) => {
+      section.style.padding = '24px';
+      section.style.border = '1px solid rgba(73, 113, 92, 0.1)';
+      section.style.borderRadius = '20px';
+      section.style.backgroundColor = 'rgba(255, 255, 252, 0.86)';
+    });
+
+  clonedReport.querySelectorAll<HTMLElement>('[data-pdf-heading]').forEach((heading) => {
+    heading.style.fontFamily = PDF_SERIF_FONT;
+    heading.style.fontSize = '19px';
+    heading.style.fontWeight = '600';
+    heading.style.letterSpacing = '0.04em';
+    heading.style.color = '#2b5745';
+  });
+
+  const analysisGrid = clonedReport.querySelector<HTMLElement>('[data-pdf-analysis-grid]');
+  if (analysisGrid) {
+    analysisGrid.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
+    analysisGrid.style.gap = '14px';
+  }
+
+  const reportFooter = clonedReport.querySelector<HTMLElement>(
+    '[data-pdf-section="footer"]',
+  );
+  if (reportFooter) {
+    reportFooter.style.paddingTop = '14px';
+    reportFooter.style.fontSize = '10px';
+    reportFooter.style.letterSpacing = '0.08em';
+    reportFooter.style.color = '#819288';
+  }
 
   const colorCanvas = clonedDocument.createElement('canvas');
   colorCanvas.width = 1;
@@ -167,6 +277,7 @@ function addCanvasPagesToPdf(
   pdf: jsPDF,
   canvas: HTMLCanvasElement,
   sectionBreaks: number[],
+  background: HTMLImageElement,
 ): void {
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -178,8 +289,8 @@ function addCanvasPagesToPdf(
     Math.floor(contentHeight / millimetersPerPixel),
   );
 
+  const pageRanges: { start: number; end: number }[] = [];
   let sourceY = 0;
-  let pageIndex = 0;
   while (sourceY < canvas.height) {
     const maximumEnd = Math.min(sourceY + pageHeightInPixels, canvas.height);
     const minimumUsefulEnd = sourceY + pageHeightInPixels * 0.55;
@@ -187,44 +298,95 @@ function addCanvasPagesToPdf(
       .filter((position) => position >= minimumUsefulEnd && position <= maximumEnd)
       .at(-1);
     const sliceEnd = preferredEnd ?? maximumEnd;
-    const sliceHeight = sliceEnd - sourceY;
+    pageRanges.push({ start: sourceY, end: sliceEnd });
+    sourceY = sliceEnd;
+  }
+
+  const pixelsPerMillimeter = canvas.width / contentWidth;
+  const pageCanvasWidth = Math.round(pdfWidth * pixelsPerMillimeter);
+  const pageCanvasHeight = Math.round(pdfHeight * pixelsPerMillimeter);
+  const marginPixels = Math.round(PDF_PAGE_MARGIN_MM * pixelsPerMillimeter);
+
+  pageRanges.forEach(({ start, end }, pageIndex) => {
+    const sliceHeight = end - start;
     const pageCanvas = document.createElement('canvas');
-    pageCanvas.width = canvas.width;
-    pageCanvas.height = sliceHeight;
+    pageCanvas.width = pageCanvasWidth;
+    pageCanvas.height = pageCanvasHeight;
     const pageContext = pageCanvas.getContext('2d');
     if (!pageContext) {
       throw new Error('无法创建 PDF 分页画布');
     }
 
-    pageContext.fillStyle = '#ffffff';
+    const backgroundScale = Math.max(
+      pageCanvas.width / background.naturalWidth,
+      pageCanvas.height / background.naturalHeight,
+    );
+    const backgroundWidth = background.naturalWidth * backgroundScale;
+    const backgroundHeight = background.naturalHeight * backgroundScale;
+    pageContext.drawImage(
+      background,
+      (pageCanvas.width - backgroundWidth) / 2,
+      (pageCanvas.height - backgroundHeight) / 2,
+      backgroundWidth,
+      backgroundHeight,
+    );
+
+    // 中央轻薄的暖白阅读层保留水彩边缘，同时确保文字和图表清晰。
+    const readingLayer = pageContext.createLinearGradient(
+      0,
+      0,
+      pageCanvas.width,
+      0,
+    );
+    readingLayer.addColorStop(0, 'rgba(255, 254, 250, 0.28)');
+    readingLayer.addColorStop(0.1, 'rgba(255, 254, 250, 0.7)');
+    readingLayer.addColorStop(0.9, 'rgba(255, 254, 250, 0.7)');
+    readingLayer.addColorStop(1, 'rgba(255, 254, 250, 0.28)');
+    pageContext.fillStyle = readingLayer;
     pageContext.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
     pageContext.drawImage(
       canvas,
       0,
-      sourceY,
+      start,
       canvas.width,
       sliceHeight,
-      0,
-      0,
+      marginPixels,
+      marginPixels,
       canvas.width,
       sliceHeight,
     );
 
     if (pageIndex > 0) pdf.addPage();
+
+    const footerFontSize = Math.max(14, Math.round(pageCanvas.width * 0.009));
+    pageContext.font = `500 ${footerFontSize}px ${PDF_SANS_FONT}`;
+    pageContext.fillStyle = 'rgba(49, 82, 66, 0.62)';
+    pageContext.textBaseline = 'middle';
+    pageContext.textAlign = 'left';
+    pageContext.fillText(
+      '微迹 · 健康报告',
+      marginPixels,
+      pageCanvas.height - Math.round(marginPixels * 0.42),
+    );
+    pageContext.textAlign = 'right';
+    pageContext.fillText(
+      `${pageIndex + 1} / ${pageRanges.length}`,
+      pageCanvas.width - marginPixels,
+      pageCanvas.height - Math.round(marginPixels * 0.42),
+    );
+
     pdf.addImage(
       pageCanvas.toDataURL('image/jpeg', 0.9),
       'JPEG',
-      PDF_PAGE_MARGIN_MM,
-      PDF_PAGE_MARGIN_MM,
-      contentWidth,
-      sliceHeight * millimetersPerPixel,
+      0,
+      0,
+      pdfWidth,
+      pdfHeight,
       undefined,
       'FAST',
     );
-
-    sourceY += sliceHeight;
-    pageIndex += 1;
-  }
+  });
 }
 
 const REPORT_TYPES: { value: ReportType; label: string; days: number }[] = [
@@ -733,13 +895,14 @@ const ReportPage: React.FC = () => {
       const element = reportRef.current;
       await document.fonts?.ready;
       await waitForReportImages(element);
+      const pdfBackground = await loadPdfBackground(reportPdfBackground);
 
       const renderScale = isMobile ? 1.5 : 2;
       let sectionBreaks: number[] = [];
       const canvas = await html2canvas(element, {
         scale: renderScale,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
         logging: false,
         imageTimeout: 15000,
         windowWidth: 1200,
@@ -761,7 +924,7 @@ const ReportPage: React.FC = () => {
       });
 
       const pdf = new jsPDF('p', 'mm', 'a4');
-      addCanvasPagesToPdf(pdf, canvas, sectionBreaks);
+      addCanvasPagesToPdf(pdf, canvas, sectionBreaks, pdfBackground);
       const fileName = `健康报告_${reportData.startDate}_${reportData.endDate}.pdf`;
       pdf.setProperties({
         title: fileName.replace(/\.pdf$/i, ''),
@@ -1080,12 +1243,15 @@ const ReportPage: React.FC = () => {
           {/* 报告内容（用于 PDF 导出截取） */}
            <div ref={reportRef} data-pdf-report className="rounded-3xl shadow-sm p-6 md:p-8 space-y-8" style={{ backgroundColor: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', border: '1px solid rgba(255, 255, 255, 0.5)' }}>
              {/* 报告标题 + 右上角导出按钮 */}
-              <div data-pdf-section className="flex items-start justify-between border-b border-border pb-6">
+              <div data-pdf-section="header" className="flex items-start justify-between border-b border-border pb-6">
                 <div>
-                  <h2 className="text-2xl font-bold font-sans-hei">
+                  <p data-pdf-only className="hidden">
+                    微迹 · 健康周期总结
+                  </p>
+                  <h2 data-pdf-title className="text-2xl font-bold font-sans-hei">
                     {currentPeriod.label.includes('本') ? '' : periodLabel.replace('报', '')}健康报告
                   </h2>
-                  <p className="text-muted-foreground text-sm mt-2 w-[175px]">
+                  <p data-pdf-period className="text-muted-foreground text-sm mt-2 w-[175px]">
                     {reportData.startDate} 至 {reportData.endDate}
                   </p>
                 </div>
@@ -1125,7 +1291,7 @@ const ReportPage: React.FC = () => {
               </div>
 
              {/* 健康评分 + 核心指标 */}
-             <div data-pdf-section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+             <div data-pdf-section="score" className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
                {/* 圆形进度条 */}
                <div className="flex flex-col items-center">
                  <ScoreRing score={scores.overall} />
@@ -1138,7 +1304,7 @@ const ReportPage: React.FC = () => {
                </div>
 
               {/* 核心指标 */}
-              <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div data-pdf-metric-grid className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {metrics?.map((m, idx) => {
                   const Icon = m.icon;
                   return (
@@ -1168,12 +1334,12 @@ const ReportPage: React.FC = () => {
             </div>
 
             {/* 各维度分析 */}
-            <div data-pdf-section className="space-y-4">
-              <h3 className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
+            <div data-pdf-section="analysis" className="space-y-4">
+              <h3 data-pdf-heading className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
                 <Heart size={20} className="text-primary" />
                 维度分析
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div data-pdf-analysis-grid className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-module-sleep-bg rounded-xl p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <MoonStar size={18} className="text-module-sleep" />
@@ -1226,8 +1392,8 @@ const ReportPage: React.FC = () => {
             </div>
 
             {/* 健康建议 */}
-            <div data-pdf-section className="space-y-4">
-              <h3 className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
+            <div data-pdf-section="advice" className="space-y-4">
+              <h3 data-pdf-heading className="text-lg font-medium text-foreground font-sans-hei flex items-center gap-2">
                 <Heart size={20} className="text-primary" />
                 健康建议
               </h3>
@@ -1244,7 +1410,7 @@ const ReportPage: React.FC = () => {
             </div>
 
             {/* 页脚 */}
-            <div data-pdf-section className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
+            <div data-pdf-section="footer" className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
               由 微迹 自动生成 · {dayjs().format('YYYY-MM-DD')}
             </div>
           </div>
