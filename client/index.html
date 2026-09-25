@@ -32,17 +32,17 @@
       window.__platform__ = {};
     }
 
-    var appPublished = window.__platform__.appPublished || {};
-    var appInfo = appPublished.app_info || {};
+    var platformPublishedData = window.__platform__.appPublished || {};
+    var platformPublishedInfo = platformPublishedData.app_info || {};
 
     window.__platform__.appPublished = {
-      ...appPublished,
+      ...platformPublishedData,
       app_info: {
-        ...appInfo,
+        ...platformPublishedInfo,
         app_name: '记录微小，留下痕迹',
         show_badge: false
       },
-      app_runtime_extra: appPublished.app_runtime_extra || {}
+      app_runtime_extra: platformPublishedData.app_runtime_extra || {}
     };
   </script>
 </head>
