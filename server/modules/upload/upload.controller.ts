@@ -33,11 +33,21 @@ export class UploadController {
     const result = await this.uploadService.uploadImage(req.user.userId, file);
     return {
       ...result,
-      downloadUrl: `/api/upload/image/${result.objectPath}`,
+      downloadUrl: `/media/image/${result.objectPath}`,
     };
   }
+}
 
-  @Get(['image/:fileName', 'image/:userId/:fileName'])
+/**
+ * 图片需要能被浏览器的 <img> 标签直接读取。妙搭框架会对所有 /api/*
+ * 请求校验 CSRF 请求头，而 <img> 无法携带该请求头，因此将只读图片路由
+ * 放在 /media 下。上传接口仍保留在 /api 下，并继续经过 JWT 与 CSRF 保护。
+ */
+@Controller('media/image')
+export class PublicImageController {
+  constructor(private readonly uploadService: UploadService) {}
+
+  @Get([':fileName', ':userId/:fileName'])
   async downloadImage(
     @Param('userId') userId: string | undefined,
     @Param('fileName') fileName: string,

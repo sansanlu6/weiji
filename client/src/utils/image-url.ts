@@ -9,20 +9,26 @@ const STORAGE_OBJECT_PATH_PATTERN =
  */
 export function resolveImageUrl(src: string): string {
   const normalizedSrc = src.trim();
-  if (!normalizedSrc || normalizedSrc.startsWith('/api/upload/image/')) {
+  if (!normalizedSrc || normalizedSrc.startsWith('/media/image/')) {
     return normalizedSrc;
+  }
+
+  // 兼容此前已经保存进数据库的旧版本站代理地址。/api/* 会被框架要求
+  // 携带 CSRF 请求头，而普通 <img> 标签无法添加该请求头。
+  if (normalizedSrc.startsWith('/api/upload/image/')) {
+    return normalizedSrc.replace('/api/upload/image/', '/media/image/');
   }
 
   // 兼容早期迁移到 Supabase 时只在数据库保存了对象文件名
   // （例如 1876813578438985.jpg）的记录。这类地址也应走本站图片代理。
   if (STORAGE_OBJECT_PATH_PATTERN.test(normalizedSrc)) {
-    return `/api/upload/image/${normalizedSrc}`;
+    return `/media/image/${normalizedSrc}`;
   }
 
   // 兼容“/文件名”格式，但不影响 /assets/... 等真正的本地素材。
   const rootObjectPath = normalizedSrc.match(/^\/([^/]+)$/)?.[1];
   if (rootObjectPath && STORAGE_OBJECT_PATH_PATTERN.test(rootObjectPath)) {
-    return `/api/upload/image/${rootObjectPath}`;
+    return `/media/image/${rootObjectPath}`;
   }
 
   try {
@@ -36,7 +42,7 @@ export function resolveImageUrl(src: string): string {
       !decodedPath.includes('/') &&
       STORAGE_OBJECT_PATH_PATTERN.test(decodedPath)
     ) {
-      return `/api/upload/image/${decodedPath}`;
+      return `/media/image/${decodedPath}`;
     }
 
     const markerIndex = url.pathname.indexOf(SUPABASE_PUBLIC_OBJECT_MARKER);
@@ -48,7 +54,7 @@ export function resolveImageUrl(src: string): string {
       markerIndex + SUPABASE_PUBLIC_OBJECT_MARKER.length,
     );
     return objectPath
-      ? `/api/upload/image/${objectPath}`
+      ? `/media/image/${objectPath}`
       : normalizedSrc;
   } catch {
     return normalizedSrc;

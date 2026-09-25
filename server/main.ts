@@ -70,10 +70,13 @@ async function bootstrap() {
         });
       }
 
-      // API 请求必须交给 Nest 控制器处理。图片代理地址以 .jpg/.png
-      // 结尾，如果继续执行下面的静态文件判断，会被误拦截成 404。
+      // API 与公开图片请求必须交给 Nest 控制器处理。图片代理地址以
+      // .jpg/.png 结尾，如果继续执行下面的静态文件判断，会被误拦截成 404。
       const requestPath = url.split('?')[0];
-      if (requestPath.startsWith('/api/')) {
+      if (
+        requestPath.startsWith('/api/') ||
+        requestPath.startsWith('/media/image/')
+      ) {
         return next();
       }
 
