@@ -263,7 +263,7 @@ const YearView: React.FC = () => {
         <Image
           src={osmanthusYearHero}
           alt=""
-          className="absolute right-0 top-1/2 h-[140%] w-auto -translate-y-1/2 opacity-20 md:opacity-25 pointer-events-none z-0 object-contain"
+          className="absolute right-0 top-1/2 h-[140%] w-auto -translate-y-1/2 opacity-20 md:opacity-[0.66] pointer-events-none z-0 object-contain"
         />
         <div className="relative z-10">
           <div className="font-title text-3xl font-semibold tabular-nums" style={{ color: '#2a483a' }}>
@@ -277,8 +277,8 @@ const YearView: React.FC = () => {
 
       {/* 关键指标 - 网格布局 */}
       <div
-        className="grid grid-cols-2 md:grid-cols-3"
-        style={{ rowGap: '10px', columnGap: '16px', justifyItems: 'center' }}
+        className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2.5 md:gap-x-8 md:gap-y-6"
+        style={{ justifyItems: 'center' }}
       >
         <StatCard
           value={String(keyMetrics.avgSleepH || '—')}
