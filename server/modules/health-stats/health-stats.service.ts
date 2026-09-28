@@ -117,6 +117,19 @@ export class HealthStatsService {
     return { start, end };
   }
 
+  /** 优先使用页面明确选择的周期；未传周期时兼容原有最近 N 天查询。 */
+  private resolveStatsRange(
+    rangeDays: number,
+    startDate?: string,
+    endDate?: string,
+  ): { start: Date; end: Date } {
+    if (startDate && endDate) {
+      const range = this.parseFullDayRange(startDate, endDate);
+      return { start: range.start!, end: range.end! };
+    }
+    return this.getDateRange(rangeDays);
+  }
+
   /** 将 timestamptz 列按 Asia/Shanghai 日期转成 YYYY-MM-DD 字符串的 SQL 表达式。 */
   private dateDay(dateExpr: any) {
     return sql<string>`to_char(${dateExpr} AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD')`;
@@ -160,8 +173,14 @@ export class HealthStatsService {
     userId: string,
     _period: string,
     rangeDays: number,
+    startDate?: string,
+    endDate?: string,
   ): Promise<SleepDayStat[]> {
-    const { start, end } = this.getDateRange(rangeDays);
+    const { start, end } = this.resolveStatsRange(
+      rangeDays,
+      startDate,
+      endDate,
+    );
     const sleepRange = this.getSleepRange(start, end);
     const dayKey = this.sleepDay();
 
@@ -205,8 +224,14 @@ export class HealthStatsService {
     userId: string,
     _period: string,
     rangeDays: number,
+    startDate?: string,
+    endDate?: string,
   ): Promise<WaterDayStat[]> {
-    const { start, end } = this.getDateRange(rangeDays);
+    const { start, end } = this.resolveStatsRange(
+      rangeDays,
+      startDate,
+      endDate,
+    );
     const dayKey = this.dateDay(healthWater.drinkTime);
 
       const rows = await this.db
@@ -241,8 +266,14 @@ export class HealthStatsService {
     userId: string,
     _period: string,
     rangeDays: number,
+    startDate?: string,
+    endDate?: string,
   ): Promise<ExerciseDayStat[]> {
-    const { start, end } = this.getDateRange(rangeDays);
+    const { start, end } = this.resolveStatsRange(
+      rangeDays,
+      startDate,
+      endDate,
+    );
     const dayKey = this.dateDay(healthExercise.startTime);
 
     const rows = await this.db

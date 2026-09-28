@@ -58,13 +58,21 @@ export class HealthStatsController {
     @Req() req: any,
     @Query('period') period: string = 'month',
     @Query('range') range: string = '30',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<SleepDayStat[]> {
     const { userId } = req.user;
     const rangeNum = parseInt(range, 10);
     if (isNaN(rangeNum) || rangeNum <= 0) {
       throw new BadRequestException('range 必须为正整数');
     }
-    return this.statsService.getSleepStats(userId, period, rangeNum);
+    return this.statsService.getSleepStats(
+      userId,
+      period,
+      rangeNum,
+      startDate,
+      endDate,
+    );
   }
 
   @Get('water')
@@ -72,13 +80,21 @@ export class HealthStatsController {
     @Req() req: any,
     @Query('period') period: string = 'month',
     @Query('range') range: string = '30',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<WaterDayStat[]> {
     const { userId } = req.user;
     const rangeNum = parseInt(range, 10);
     if (isNaN(rangeNum) || rangeNum <= 0) {
       throw new BadRequestException('range 必须为正整数');
     }
-    return this.statsService.getWaterStats(userId, period, rangeNum);
+    return this.statsService.getWaterStats(
+      userId,
+      period,
+      rangeNum,
+      startDate,
+      endDate,
+    );
   }
 
   @Get('exercise')
@@ -86,13 +102,21 @@ export class HealthStatsController {
     @Req() req: any,
     @Query('period') period: string = 'month',
     @Query('range') range: string = '30',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ): Promise<ExerciseDayStat[]> {
     const { userId } = req.user;
     const rangeNum = parseInt(range, 10);
     if (isNaN(rangeNum) || rangeNum <= 0) {
       throw new BadRequestException('range 必须为正整数');
     }
-    return this.statsService.getExerciseStats(userId, period, rangeNum);
+    return this.statsService.getExerciseStats(
+      userId,
+      period,
+      rangeNum,
+      startDate,
+      endDate,
+    );
   }
 
   @Get('diet/meals')

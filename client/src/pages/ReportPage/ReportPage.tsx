@@ -1154,9 +1154,9 @@ const ReportPage: React.FC = () => {
       logger.info(`[report] generating report, type=${reportType}, start=${start}, end=${end}`);
 
       const results = await Promise.allSettled([
-        getSleepStats(rd),
-        getWaterStats(rd),
-        getExerciseStats(rd),
+        getSleepStats(rd, start, end),
+        getWaterStats(rd, start, end),
+        getExerciseStats(rd, start, end),
         getMoodDistribution(start, end),
         getPainFrequency(start, end),
       ]);
@@ -1168,6 +1168,19 @@ const ReportPage: React.FC = () => {
       const exerciseData: StatsItem[] = exerciseRes.status === 'fulfilled' ? exerciseRes.value : [];
       const moodData: MoodDistribution[] = moodRes.status === 'fulfilled' ? moodRes.value : [];
       const painData: PainFrequency[] = painRes.status === 'fulfilled' ? painRes.value : [];
+
+      const hasAnyData =
+        sleepData.length > 0 ||
+        waterData.length > 0 ||
+        exerciseData.length > 0 ||
+        moodData.some((item) => item.count > 0) ||
+        painData.some((item) => item.count > 0);
+
+      if (!hasAnyData) {
+        setReportData(null);
+        toast.info('该周期暂无健康记录，暂不能生成报告');
+        return;
+      }
 
       setReportData({
         sleepData,
@@ -1436,6 +1449,7 @@ const ReportPage: React.FC = () => {
                          onClick={() => {
                            setPeriodIdx(idx);
                            setPeriodOpen(false);
+                           setReportData(null);
                          }}
                          className="text-sm cursor-pointer transition-colors rounded-lg"
                          style={{

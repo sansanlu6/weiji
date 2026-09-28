@@ -23,28 +23,42 @@ export interface SleepStatsItem extends StatsItem {
 
 export async function getSleepStats(
   range: number = 30,
+  startDate?: string,
+  endDate?: string,
 ): Promise<SleepStatsItem[]> {
-  logger.info(`[stats] fetching sleep stats, range=${range}`);
+  logger.info(
+    `[stats] fetching sleep stats, range=${range}, start=${startDate || '-'}, end=${endDate || '-'}`,
+  );
   const { data } = await apiClient.get(`${BASE}/sleep`, {
-    params: { range },
+    params: { range, startDate, endDate },
   });
   return data;
 }
 
-export async function getWaterStats(range: number = 30): Promise<StatsItem[]> {
-  logger.info(`[stats] fetching water stats, range=${range}`);
+export async function getWaterStats(
+  range: number = 30,
+  startDate?: string,
+  endDate?: string,
+): Promise<StatsItem[]> {
+  logger.info(
+    `[stats] fetching water stats, range=${range}, start=${startDate || '-'}, end=${endDate || '-'}`,
+  );
   const { data } = await apiClient.get(`${BASE}/water`, {
-    params: { range },
+    params: { range, startDate, endDate },
   });
   return data;
 }
 
 export async function getExerciseStats(
   range: number = 30,
+  startDate?: string,
+  endDate?: string,
 ): Promise<StatsItem[]> {
-  logger.info(`[stats] fetching exercise stats, range=${range}`);
+  logger.info(
+    `[stats] fetching exercise stats, range=${range}, start=${startDate || '-'}, end=${endDate || '-'}`,
+  );
   const { data } = await apiClient.get(`${BASE}/exercise`, {
-    params: { range },
+    params: { range, startDate, endDate },
   });
   return data;
 }
