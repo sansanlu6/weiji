@@ -445,6 +445,7 @@ export interface YearlyDetailStats {
   water: {
     avgMl: number[];
     avgCups: number[];
+    recordDays: number[];
     yearTotalMl: number;
     bestMonthIdx: number;
     bestAvgMl: number;

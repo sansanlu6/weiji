@@ -131,7 +131,7 @@ const YearView: React.FC = () => {
     const bestExerciseMonth = months[yearStats.exercise.peakMonthIdx] ?? '';
     const bestExerciseCount = yearStats.exercise.peakCount;
 
-    const waterDays = yearStats.water.avgMl.filter((v) => v > 0).length;
+    const waterDays = yearStats.water.recordDays.reduce((sum, days) => sum + days, 0);
     const totalWaterMl = yearStats.water.yearTotalMl;
     const avgWaterMl = waterDays > 0 ? Math.round(totalWaterMl / waterDays) : 0;
     const avgWaterCups = Number((avgWaterMl / 250).toFixed(1));

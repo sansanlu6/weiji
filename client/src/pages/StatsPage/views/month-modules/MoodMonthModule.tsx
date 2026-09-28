@@ -1,8 +1,13 @@
+import { useRef } from 'react';
 import { Smile } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
 import dayjs from 'dayjs';
 import type { MonthlyDetailStats } from '@shared/api.interface';
+import {
+  positionTooltipWithinViewport,
+  VIEWPORT_TOOLTIP_CSS,
+} from '../../charts/tooltip-position';
 
 interface MoodMonthModuleProps {
   data: MonthlyDetailStats['mood'];
@@ -26,6 +31,7 @@ const MOOD_COLORS = [
 ];
 
 const MoodMonthModule: React.FC<MoodMonthModuleProps> = ({ data, currentMonth }) => {
+  const chartRef = useRef<ReactECharts | null>(null);
   const distribution = data.distribution ?? [];
   const sortedMoods = distribution.slice().sort((a, b) => b.count - a.count);
   const totalCount = sortedMoods.reduce((sum, m) => sum + m.count, 0);
@@ -58,6 +64,16 @@ const MoodMonthModule: React.FC<MoodMonthModuleProps> = ({ data, currentMonth })
   const stackedOption: EChartsOption = {
     tooltip: {
       trigger: 'item',
+      renderMode: 'html',
+      appendToBody: true,
+      confine: false,
+      extraCssText: VIEWPORT_TOOLTIP_CSS,
+      position: (point, _params, _dom, _rect, tooltipSize) =>
+        positionTooltipWithinViewport(
+          chartRef.current?.getEchartsInstance().getDom() ?? null,
+          point,
+          tooltipSize,
+        ),
       backgroundColor: '#ffffff',
       borderColor: 'hsl(95, 40%, 75%)',
       borderWidth: 1,
@@ -146,6 +162,7 @@ const MoodMonthModule: React.FC<MoodMonthModuleProps> = ({ data, currentMonth })
         {hasData ? (
           <div className="h-7 w-full">
             <ReactECharts
+              ref={chartRef}
               option={stackedOption}
               theme="ud"
               autoResize={true}

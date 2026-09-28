@@ -1,7 +1,12 @@
+import { useRef } from 'react';
 import { Utensils } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
 import type { MonthlyDetailStats } from '@shared/api.interface';
+import {
+  positionTooltipWithinViewport,
+  VIEWPORT_TOOLTIP_CSS,
+} from '../../charts/tooltip-position';
 
 interface DietMonthModuleProps {
   data: MonthlyDetailStats['diet'];
@@ -10,15 +15,9 @@ interface DietMonthModuleProps {
 
 const DIET_TYPE_COLORS = { homemade: '#95de64', takeout: '#ffa940', dining: '#ff85c0' };
 
-interface FoodSourceItem {
-  type: string;
-  count: number;
-}
-
 const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) => {
-  // 后端扩展字段：饮食来源构成（家常/外卖/外食），用可选链防御
-  const foodSource = (data as unknown as { foodSourceComposition?: FoodSourceItem[] })
-    .foodSourceComposition;
+  const chartRef = useRef<ReactECharts | null>(null);
+  const foodSource = data.mealTypeComposition ?? [];
 
   const getCount = (keyword: string): number => {
     const item = foodSource?.find(
@@ -32,6 +31,11 @@ const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) 
   const dining = getCount('外食');
 
   const total = homemade + takeout + dining || 1;
+  const chartItems = [
+    { name: '家常', value: homemade, color: DIET_TYPE_COLORS.homemade },
+    { name: '外卖', value: takeout, color: DIET_TYPE_COLORS.takeout },
+    { name: '外食', value: dining, color: DIET_TYPE_COLORS.dining },
+  ].filter((item) => item.value > 0);
 
   const fullDays = data.fullMealDays ?? 0;
   const regularity = daysInMonth > 0 ? Math.round((fullDays / daysInMonth) * 100) : 0;
@@ -39,40 +43,42 @@ const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) 
   const option: EChartsOption = {
     tooltip: {
       trigger: 'item',
+      renderMode: 'html',
+      appendToBody: true,
+      confine: false,
+      extraCssText: VIEWPORT_TOOLTIP_CSS,
+      position: (point, _params, _dom, _rect, tooltipSize) =>
+        positionTooltipWithinViewport(
+          chartRef.current?.getEchartsInstance().getDom() ?? null,
+          point,
+          tooltipSize,
+        ),
       formatter: (params) => {
-        const p = params as { name: string; value: number; percent?: number };
-        return `${p.name}<br/>${p.value} 次 (${p.percent?.toFixed(0) ?? 0}%)`;
+        const p = params as { seriesName?: string; value: number };
+        const percent = total > 0 ? Math.round((Number(p.value) / total) * 100) : 0;
+        return `${p.seriesName ?? ''}<br/>${p.value} 次 (${percent}%)`;
       },
     },
     grid: { left: 38, right: 12, top: 25, bottom: 25, containLabel: false },
     xAxis: { type: 'value', show: false, max: total },
     yAxis: { type: 'category', data: [''], show: false },
-    series: [
-      {
-        name: '饮食类型',
-        type: 'bar',
-        stack: 'total',
-        barWidth: 28,
-        data: [
-          {
-            name: '家常',
-            value: homemade,
-            itemStyle: { color: DIET_TYPE_COLORS.homemade, borderRadius: [6, 0, 0, 6] },
-          },
-          {
-            name: '外卖',
-            value: takeout,
-            itemStyle: { color: DIET_TYPE_COLORS.takeout },
-          },
-          {
-            name: '外食',
-            value: dining,
-            itemStyle: { color: DIET_TYPE_COLORS.dining, borderRadius: [0, 6, 6, 0] },
-          },
-        ],
-        label: { show: false },
+    series: chartItems.map((item, index, items) => ({
+      name: item.name,
+      type: 'bar' as const,
+      stack: 'total',
+      barWidth: 28,
+      data: [item.value],
+      itemStyle: {
+        color: item.color,
+        borderRadius:
+          index === 0
+            ? [6, 0, 0, 6]
+            : index === items.length - 1
+              ? [0, 6, 6, 0]
+              : 0,
       },
-    ],
+      label: { show: false },
+    })),
   };
 
   return (
@@ -90,7 +96,7 @@ const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-7">
           {homemade + takeout + dining > 0 ? (
-            <ReactECharts option={option} theme="ud" autoResize={true} className="chart-container" style={{ width: '100%', height: '100%' }} />
+            <ReactECharts ref={chartRef} option={option} theme="ud" autoResize={true} className="chart-container" style={{ width: '100%', height: '100%' }} />
           ) : (
             <div className="h-full bg-muted/40 rounded-full" />
           )}

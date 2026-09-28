@@ -2305,6 +2305,7 @@ export class HealthStatsService {
       water: {
         avgMl: new Array(12).fill(0),
         avgCups: new Array(12).fill(0),
+        recordDays: new Array(12).fill(0),
         yearTotalMl: 0,
         bestMonthIdx: 0,
         bestAvgMl: 0,
@@ -2898,6 +2899,7 @@ export class HealthStatsService {
     // ----- 喝水 -----
     const waterAvgMl: number[] = new Array(12).fill(0);
     const waterAvgCups: number[] = new Array(12).fill(0);
+    const waterRecordDays: number[] = new Array(12).fill(0);
     let yearTotalMl = 0;
     for (const row of waterRows as any[]) {
       const idx = monthKeyToIdx.get(row.month_key);
@@ -2906,6 +2908,7 @@ export class HealthStatsService {
       const totalCups = Number(row.total_cups) || 0;
       const recordDays = Number(row.record_days) || 0;
       yearTotalMl += totalMl;
+      waterRecordDays[idx] = recordDays;
       waterAvgMl[idx] = recordDays > 0
         ? Math.round(totalMl / recordDays)
         : 0;
@@ -3016,6 +3019,7 @@ export class HealthStatsService {
       water: {
         avgMl: waterAvgMl,
         avgCups: waterAvgCups,
+        recordDays: waterRecordDays,
         yearTotalMl,
         bestMonthIdx: waterBestMonthIdx,
         bestAvgMl: waterBestAvgMl,
