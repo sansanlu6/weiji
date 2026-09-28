@@ -1,14 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Image } from '@client/src/components/ui/image';
-import watercolorDecoImg from '@client/src/assets/watercolor-decoration.png';
 import osmanthusYearHero from '@client/src/assets/osmanthus-year-hero-v2.png';
 import watercolorDecor from '@client/src/assets/watercolor-week-switch.png';
-import sleepBg from '@client/src/assets/watercolor-sleep.png';
-import exerciseBg from '@client/src/assets/watercolor-exercise.png';
-import waterBg from '@client/src/assets/watercolor-water.png';
-import moodBg from '@client/src/assets/watercolor-mood.png';
-import dietBg from '@client/src/assets/watercolor-diet.png';
-import mealBg from '@client/src/assets/watercolor-meal.png';
 import dayjs from 'dayjs';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -25,7 +18,6 @@ import HalfYearCompare from '../components/HalfYearCompare';
 
 
 interface StatCardProps {
-  imageSrc: string;
   value: string;
   unit: string;
   label: string;
@@ -34,7 +26,7 @@ interface StatCardProps {
   unitColor: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ imageSrc, value, unit, label, sub, valueColor, unitColor }) => {
+const StatCard: React.FC<StatCardProps> = ({ value, unit, label, sub, valueColor, unitColor }) => {
   return (
     <div
       className="relative font-sans-hei"
@@ -43,34 +35,18 @@ const StatCard: React.FC<StatCardProps> = ({ imageSrc, value, unit, label, sub, 
         height: '96px',
         overflow: 'hidden',
         borderRadius: '16px',
-        background: 'rgba(255, 255, 255, 0.7)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.5)',
-        boxShadow: '0 2px 8px rgba(42, 72, 58, 0.06)',
+        background: 'rgba(255, 255, 255, 0.38)',
+        backdropFilter: 'blur(18px) saturate(1.12)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.12)',
+        border: '1px solid rgba(255, 255, 255, 0.62)',
+        boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 6px 20px rgba(42, 72, 58, 0.06)',
       }}
     >
-      <Image
-        src={watercolorDecoImg}
-        alt=""
-        style={{
-          position: 'absolute',
-          top: '-8px',
-          right: '-18px',
-          width: '120px',
-          height: 'auto',
-          zIndex: 1,
-          opacity: 0.65,
-          pointerEvents: 'none',
-          userSelect: 'none',
-          transform: 'rotate(6deg)',
-        }}
-      />
       <div
         style={{
           position: 'absolute',
           left: '14px',
-          right: '55px',
+          right: '14px',
           top: 0,
           bottom: 0,
           zIndex: 1,
@@ -274,11 +250,20 @@ const YearView: React.FC = () => {
       {hasAnyData && (
         <>
       {/* 全年记录总览大卡片 */}
-      <div className="relative overflow-hidden rounded-3xl p-6 shadow-sm" style={{ background: 'rgba(254, 248, 229, 0.38)' }}>
+      <div
+        className="relative isolate overflow-hidden rounded-3xl p-6 shadow-sm"
+        style={{
+          background: 'linear-gradient(110deg, rgba(255, 252, 240, 0.94) 0%, rgba(254, 248, 229, 0.9) 58%, rgba(236, 248, 239, 0.88) 100%)',
+          border: '1px solid rgba(224, 207, 157, 0.28)',
+          boxShadow: '0 6px 24px rgba(42, 72, 58, 0.07)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
         <Image
           src={osmanthusYearHero}
           alt=""
-          className="absolute right-0 top-0 h-full w-auto opacity-85 pointer-events-none z-0 object-contain md:hidden"
+          className="absolute right-0 top-1/2 h-[140%] w-auto -translate-y-1/2 opacity-20 md:opacity-25 pointer-events-none z-0 object-contain"
         />
         <div className="relative z-10">
           <div className="font-title text-3xl font-semibold tabular-nums" style={{ color: '#2a483a' }}>
@@ -296,7 +281,6 @@ const YearView: React.FC = () => {
         style={{ rowGap: '10px', columnGap: '16px', justifyItems: 'center' }}
       >
         <StatCard
-          imageSrc={sleepBg}
           value={String(keyMetrics.avgSleepH || '—')}
           unit="小时/晚"
           label="平均睡眠"
@@ -305,7 +289,6 @@ const YearView: React.FC = () => {
           unitColor="rgba(90, 74, 140, 0.7)"
         />
         <StatCard
-          imageSrc={exerciseBg}
           value={fmt(keyMetrics.totalExercise)}
           unit="次"
           label="全年运动"
@@ -314,7 +297,6 @@ const YearView: React.FC = () => {
           unitColor="rgba(61, 122, 94, 0.7)"
         />
         <StatCard
-          imageSrc={waterBg}
           value={fmt(keyMetrics.avgWaterMl)}
           unit="ml"
           label="日均喝水"
@@ -323,7 +305,6 @@ const YearView: React.FC = () => {
           unitColor="rgba(58, 114, 144, 0.7)"
         />
         <StatCard
-          imageSrc={moodBg}
           value={keyMetrics.topMood}
           unit=""
           label="最常情绪"
@@ -332,7 +313,6 @@ const YearView: React.FC = () => {
           unitColor="rgba(155, 119, 54, 0.7)"
         />
         <StatCard
-          imageSrc={dietBg}
           value={fmt(keyMetrics.totalMeals)}
           unit="餐"
           label="全年餐食"
@@ -341,7 +321,6 @@ const YearView: React.FC = () => {
           unitColor="rgba(146, 101, 56, 0.7)"
         />
         <StatCard
-          imageSrc={mealBg}
           value={keyMetrics.mostCommonMealType}
           unit=""
           label="最常餐食类型"
