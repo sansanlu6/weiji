@@ -182,7 +182,7 @@ const ProfilePage: React.FC = () => {
       `}</style>
       <PageBackground />
       <div
-        className="pointer-events-none"
+        className="pointer-events-none md:hidden"
         style={{
           position: 'absolute',
           zIndex: 0,

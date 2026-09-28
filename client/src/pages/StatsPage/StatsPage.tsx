@@ -49,7 +49,7 @@ const StatsPage: React.FC = () => {
     <div id="stats-page-root" className="relative min-h-screen overflow-visible">
       <PageBackground />
       <div
-        className="pointer-events-none"
+        className="pointer-events-none md:hidden"
         style={{
           position: 'absolute',
           zIndex: 0,
