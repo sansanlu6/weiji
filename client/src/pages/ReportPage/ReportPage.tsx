@@ -79,6 +79,68 @@ function waitForNextPaint(): Promise<void> {
   });
 }
 
+function shouldUseImagePdfPreview(): boolean {
+  const mobileUserAgent =
+    /Android|iPhone|iPad|iPod|Mobile|MicroMessenger|HarmonyOS/i.test(
+      navigator.userAgent,
+    );
+  const touchViewport =
+    navigator.maxTouchPoints > 0 &&
+    Math.min(window.innerWidth, window.innerHeight) <= 1024;
+
+  return mobileUserAgent || touchViewport;
+}
+
+async function renderPdfBlobToImages(pdfBlob: Blob): Promise<string[]> {
+  const [{ getDocument, GlobalWorkerOptions }, workerModule] = await Promise.all([
+    import('pdfjs-dist/legacy/build/pdf.mjs'),
+    // eslint-disable-next-line import/no-unresolved
+    import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'),
+  ]);
+
+  GlobalWorkerOptions.workerSrc = workerModule.default;
+
+  const loadingTask = getDocument({ data: await pdfBlob.arrayBuffer() });
+  const pdfDocument = await loadingTask.promise;
+  const pages: string[] = [];
+
+  try {
+    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
+      const page = await pdfDocument.getPage(pageNumber);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const targetWidth = Math.min(
+        1600,
+        Math.max(900, Math.round(window.innerWidth * pixelRatio)),
+      );
+      const viewport = page.getViewport({ scale: targetWidth / baseViewport.width });
+      const canvas = document.createElement('canvas');
+      const canvasContext = canvas.getContext('2d', { alpha: false });
+
+      if (!canvasContext) {
+        throw new Error('无法创建 PDF 预览画布');
+      }
+
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      canvasContext.fillStyle = '#ffffff';
+      canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+      await page.render({
+        canvas,
+        canvasContext,
+        viewport,
+      }).promise;
+      pages.push(canvas.toDataURL('image/jpeg', 0.92));
+      page.cleanup();
+    }
+  } finally {
+    await pdfDocument.destroy();
+  }
+
+  return pages;
+}
+
 const PDF_COLOR_PROPERTIES = [
   'color',
   'background-color',
@@ -1130,9 +1192,7 @@ const ReportPage: React.FC = () => {
   const handleExportPDF = async (): Promise<void> => {
     if (!reportData || !scores || !analysis || !metrics) return;
 
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(
-      navigator.userAgent,
-    );
+    const useImagePreview = shouldUseImagePdfPreview();
 
     try {
       setExporting(true);
@@ -1189,12 +1249,16 @@ const ReportPage: React.FC = () => {
       const fileName = `健康报告_${reportData.startDate}_${reportData.endDate}.pdf`;
       const pdfUrl = URL.createObjectURL(pdfBlob);
 
-      if (isMobile) {
+      if (useImagePreview) {
+        setExportProgress('正在生成移动端图片预览…');
+        await waitForNextPaint();
+        const previewPages = await renderPdfBlobToImages(pdfBlob);
+
         if (pdfPreviewUrlRef.current) {
           URL.revokeObjectURL(pdfPreviewUrlRef.current);
         }
         pdfPreviewUrlRef.current = pdfUrl;
-        setPdfPreview({ fileName, pdfUrl, pages: [] });
+        setPdfPreview({ fileName, pdfUrl, pages: previewPages });
         toast.success('PDF 已生成，可预览后选择保存');
       } else {
         const link = document.createElement('a');

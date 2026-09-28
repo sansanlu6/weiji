@@ -26,6 +26,11 @@ declare module '*.ttf?inline' {
   export default value;
 }
 
+declare module '*.mjs?url' {
+  const value: string;
+  export default value;
+}
+
 declare module '*.jpeg' {
   const value: string;
   export default value;
