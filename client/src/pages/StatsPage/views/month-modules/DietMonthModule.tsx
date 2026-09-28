@@ -1,12 +1,8 @@
-import { useRef } from 'react';
 import { Utensils } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
 import type { MonthlyDetailStats } from '@shared/api.interface';
-import {
-  positionTooltipWithinViewport,
-  VIEWPORT_TOOLTIP_CSS,
-} from '../../charts/tooltip-position';
+import { VIEWPORT_TOOLTIP_CSS } from '../../charts/tooltip-position';
 
 interface DietMonthModuleProps {
   data: MonthlyDetailStats['diet'];
@@ -16,7 +12,6 @@ interface DietMonthModuleProps {
 const DIET_TYPE_COLORS = { homemade: '#95de64', takeout: '#ffa940', dining: '#ff85c0' };
 
 const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) => {
-  const chartRef = useRef<ReactECharts | null>(null);
   const foodSource = data.mealTypeComposition ?? [];
 
   const getCount = (keyword: string): number => {
@@ -45,14 +40,8 @@ const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) 
       trigger: 'item',
       renderMode: 'html',
       appendToBody: true,
-      confine: false,
+      confine: true,
       extraCssText: VIEWPORT_TOOLTIP_CSS,
-      position: (point, _params, _dom, _rect, tooltipSize) =>
-        positionTooltipWithinViewport(
-          chartRef.current?.getEchartsInstance().getDom() ?? null,
-          point,
-          tooltipSize,
-        ),
       formatter: (params) => {
         const p = params as { seriesName?: string; value: number };
         const percent = total > 0 ? Math.round((Number(p.value) / total) * 100) : 0;
@@ -96,7 +85,7 @@ const DietMonthModule: React.FC<DietMonthModuleProps> = ({ data, daysInMonth }) 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-7">
           {homemade + takeout + dining > 0 ? (
-            <ReactECharts ref={chartRef} option={option} theme="ud" autoResize={true} className="chart-container" style={{ width: '100%', height: '100%' }} />
+            <ReactECharts option={option} theme="ud" autoResize={true} className="chart-container" style={{ width: '100%', height: '100%' }} />
           ) : (
             <div className="h-full bg-muted/40 rounded-full" />
           )}

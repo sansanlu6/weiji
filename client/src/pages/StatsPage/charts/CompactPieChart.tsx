@@ -1,10 +1,6 @@
-import { useRef } from 'react';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
-import {
-  positionTooltipWithinViewport,
-  VIEWPORT_TOOLTIP_CSS,
-} from './tooltip-position';
+import { VIEWPORT_TOOLTIP_CSS } from './tooltip-position';
 
 interface CompactPieChartProps {
   data: { name: string; value: number }[];
@@ -13,20 +9,13 @@ interface CompactPieChartProps {
 }
 
 const CompactPieChart: React.FC<CompactPieChartProps> = ({ data, colors, size = 120 }) => {
-  const chartRef = useRef<ReactECharts | null>(null);
   const option: EChartsOption = {
     tooltip: {
       trigger: 'item',
       renderMode: 'html',
       appendToBody: true,
-      confine: false,
+      confine: true,
       extraCssText: VIEWPORT_TOOLTIP_CSS,
-      position: (point, _params, _dom, _rect, tooltipSize) =>
-        positionTooltipWithinViewport(
-          chartRef.current?.getEchartsInstance().getDom() ?? null,
-          point,
-          tooltipSize,
-        ),
       formatter: (params) => {
         const p = params as { name: string; value: number; percent?: number };
         return `${p.name}<br/>${p.value} (${p.percent?.toFixed(0) ?? 0}%)`;
@@ -50,7 +39,7 @@ const CompactPieChart: React.FC<CompactPieChartProps> = ({ data, colors, size = 
 
   return (
     <div style={{ width: size, height: size }}>
-      <ReactECharts ref={chartRef} option={option} theme="ud" autoResize={true} className="chart-container" style={{ width: '100%', height: '100%' }} />
+      <ReactECharts option={option} theme="ud" autoResize={true} className="chart-container" style={{ width: '100%', height: '100%' }} />
     </div>
   );
 };
