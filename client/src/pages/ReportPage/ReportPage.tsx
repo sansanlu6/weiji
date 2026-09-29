@@ -94,48 +94,78 @@ function shouldUseImagePdfPreview(): boolean {
 async function renderPdfBlobToImages(pdfBlob: Blob): Promise<string[]> {
   const [{ getDocument, GlobalWorkerOptions }, workerModule] = await Promise.all([
     import('pdfjs-dist/legacy/build/pdf.mjs'),
-    // eslint-disable-next-line import/no-unresolved
-    import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'),
+    import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&inline'),
   ]);
 
-  GlobalWorkerOptions.workerSrc = workerModule.default;
-
-  const loadingTask = getDocument({ data: await pdfBlob.arrayBuffer() });
-  const pdfDocument = await loadingTask.promise;
+  const previousWorkerPort = GlobalWorkerOptions.workerPort;
+  const pdfJsGlobal = globalThis as typeof globalThis & {
+    pdfjsWorker?: { WorkerMessageHandler?: unknown };
+  };
+  const previousFakeWorker = pdfJsGlobal.pdfjsWorker;
+  let workerPort: Worker | null = null;
   const pages: string[] = [];
 
   try {
-    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
-      const page = await pdfDocument.getPage(pageNumber);
-      const baseViewport = page.getViewport({ scale: 1 });
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-      const targetWidth = Math.min(
-        1600,
-        Math.max(900, Math.round(window.innerWidth * pixelRatio)),
+    try {
+      // 打包为浏览器可加载的 Worker，避免再次请求 Render 上的原始 .mjs 文件。
+      workerPort = new workerModule.default({ name: 'weiji-pdf-preview' });
+      GlobalWorkerOptions.workerPort = workerPort;
+    } catch (workerError) {
+      // 部分微信 WebView 禁用 Worker；直接复用已打包的 Worker 模块作为主线程后备。
+      logger.warn('[report] web worker unavailable, using bundled fake worker', {
+        error: workerError instanceof Error ? workerError.message : String(workerError),
+      });
+      const fakeWorkerModule = await import(
+        'pdfjs-dist/legacy/build/pdf.worker.min.mjs'
       );
-      const viewport = page.getViewport({ scale: targetWidth / baseViewport.width });
-      const canvas = document.createElement('canvas');
-      const canvasContext = canvas.getContext('2d', { alpha: false });
+      pdfJsGlobal.pdfjsWorker = fakeWorkerModule;
+      GlobalWorkerOptions.workerPort = null;
+    }
 
-      if (!canvasContext) {
-        throw new Error('无法创建 PDF 预览画布');
+    const loadingTask = getDocument({ data: await pdfBlob.arrayBuffer() });
+    const pdfDocument = await loadingTask.promise;
+
+    try {
+      for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber += 1) {
+        const page = await pdfDocument.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        const targetWidth = Math.min(
+          1600,
+          Math.max(900, Math.round(window.innerWidth * pixelRatio)),
+        );
+        const viewport = page.getViewport({ scale: targetWidth / baseViewport.width });
+        const canvas = document.createElement('canvas');
+        const canvasContext = canvas.getContext('2d', { alpha: false });
+
+        if (!canvasContext) {
+          throw new Error('无法创建 PDF 预览画布');
+        }
+
+        canvas.width = Math.ceil(viewport.width);
+        canvas.height = Math.ceil(viewport.height);
+        canvasContext.fillStyle = '#ffffff';
+        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+
+        await page.render({
+          canvas,
+          canvasContext,
+          viewport,
+        }).promise;
+        pages.push(canvas.toDataURL('image/jpeg', 0.92));
+        page.cleanup();
       }
-
-      canvas.width = Math.ceil(viewport.width);
-      canvas.height = Math.ceil(viewport.height);
-      canvasContext.fillStyle = '#ffffff';
-      canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-
-      await page.render({
-        canvas,
-        canvasContext,
-        viewport,
-      }).promise;
-      pages.push(canvas.toDataURL('image/jpeg', 0.92));
-      page.cleanup();
+    } finally {
+      await pdfDocument.destroy();
     }
   } finally {
-    await pdfDocument.destroy();
+    GlobalWorkerOptions.workerPort = previousWorkerPort;
+    if (previousFakeWorker === undefined) {
+      delete pdfJsGlobal.pdfjsWorker;
+    } else {
+      pdfJsGlobal.pdfjsWorker = previousFakeWorker;
+    }
+    workerPort?.terminate();
   }
 
   return pages;
@@ -1265,7 +1295,19 @@ const ReportPage: React.FC = () => {
       if (useImagePreview) {
         setExportProgress('正在生成移动端图片预览…');
         await waitForNextPaint();
-        const previewPages = await renderPdfBlobToImages(pdfBlob);
+        let previewPages: string[] = [];
+
+        try {
+          previewPages = await renderPdfBlobToImages(pdfBlob);
+        } catch (previewError) {
+          logger.warn('[report] image preview failed, falling back to native PDF preview', {
+            error:
+              previewError instanceof Error
+                ? previewError.message
+                : String(previewError),
+          });
+          toast.warning('图片预览生成失败，已切换为原生 PDF 预览');
+        }
 
         if (pdfPreviewUrlRef.current) {
           URL.revokeObjectURL(pdfPreviewUrlRef.current);

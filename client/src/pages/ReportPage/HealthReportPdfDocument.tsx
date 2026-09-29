@@ -92,15 +92,7 @@ const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    opacity: 0.72,
-  },
-  readingLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 35,
-    right: 35,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 254, 250, 0.68)',
+    opacity: 1,
   },
   content: { position: 'relative' },
   eyebrow: {
@@ -365,7 +357,6 @@ export function createHealthReportPdfDocument(props: HealthReportPdfProps): Reac
     <Document title={`健康报告_${props.startDate}_${props.endDate}`} author="微迹" subject="微迹健康报告">
       <Page size="A4" style={styles.page} wrap>
         <Image src={reportBackground} style={styles.background} fixed />
-        <View style={styles.readingLayer} fixed />
         <View style={styles.content}>
           <View wrap={false}>
             <Text style={styles.eyebrow}>微迹 · 健康周期总结</Text>

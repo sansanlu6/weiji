@@ -31,6 +31,13 @@ declare module '*.mjs?url' {
   export default value;
 }
 
+declare module '*.mjs?worker&inline' {
+  const WorkerFactory: {
+    new (options?: WorkerOptions): Worker;
+  };
+  export default WorkerFactory;
+}
+
 declare module '*.jpeg' {
   const value: string;
   export default value;
