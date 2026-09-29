@@ -232,6 +232,10 @@ const HomePage: React.FC = () => {
         }
 
         @media (min-width: 768px) {
+          .home-mobile-canvas {
+            width: 100%;
+          }
+
           .home-brand-title {
             font-weight: 800;
           }

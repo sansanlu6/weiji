@@ -57,10 +57,10 @@ const Layout = () => {
       <main
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0 md:pl-[128px] overscroll-behavior-y-none"
+        className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0 md:pl-[88px] overscroll-behavior-y-none"
       >
         <PetalFall />
-        <div className="max-w-[520px] md:mx-0 mx-auto px-4 py-6">
+        <div className="w-full max-w-[600px] md:mx-0 mx-auto px-4 py-6">
           <Outlet />
         </div>
       </main>
