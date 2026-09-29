@@ -238,8 +238,8 @@ const BodyMapPicker: React.FC<{
       <div className="bg-module-pain-bg/40 rounded-3xl p-5 flex justify-center shadow-sm w-full min-w-0">
         <div
           ref={containerRef}
-          className="relative w-40 rounded-2xl overflow-hidden cursor-crosshair select-none shadow-inner"
-          style={{ aspectRatio: '9 / 16' }}
+          className="relative w-52 sm:w-56 overflow-hidden cursor-crosshair select-none"
+          style={{ aspectRatio: '2 / 3' }}
           onClick={handleBgClick}
         >
           <Image
@@ -248,8 +248,6 @@ const BodyMapPicker: React.FC<{
             className="absolute inset-0 w-full h-full object-contain pointer-events-none"
             draggable={false}
           />
-          <div className="absolute inset-0 bg-white/40 pointer-events-none" />
-
           {currentMarkers.map((marker, idx) => {
             const colors = getLevelColor(marker.painLevel);
             const isSelected = selectedIdx === idx;
