@@ -11,9 +11,10 @@ import {
 } from '@client/src/components/ui/dialog';
 import type { PainMarker } from '@shared/api.interface';
 import { Image } from '@client/src/components/ui/image';
-
-const FRONT_IMG = '/spark/app/app_17dqp7xck1j/runtime/api/v1/storage/object/bucket_aadkt7iouqgbw_static/static%2Faadkuegiyhapu_ve_miaoda';
-const BACK_IMG = '/spark/app/app_17dqp7xck1j/runtime/api/v1/storage/object/bucket_aadkt7iouqgbw_static/static%2Faadkueg2dvkgw_ve_miaoda';
+import frontImg from '@/assets/body-front.png';
+import backImg from '@/assets/body-back.png';
+const FRONT_IMG = frontImg;
+const BACK_IMG = backImg;
 
 const PAIN_LEVELS = [
   { key: 'mild' as const, label: '轻度', dot: '#86c67c', ring: '#6bb860' },
