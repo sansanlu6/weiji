@@ -49,7 +49,7 @@ export const DIET_MEAL_TYPES: { value: 'breakfast' | 'lunch' | 'dinner' | 'suppe
 ];
 
 export const DIET_TAGS = [
-  '外卖', '外带', '堂食', '自制', '速食', '清淡', '油腻', '辛辣', '重盐',
+  '外卖', '外带', '堂食', '自制', '速食', '清淡', '油腻', '辛辣', '重盐', '高糖',
 ];
 
 export const STOOL_TYPES = [
